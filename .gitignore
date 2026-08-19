@@ -1,0 +1,14 @@
+# Datos crudos y derivados (pesados, no hace falta versionarlos)
+Muestra/
+tp2_train.csv
+tp2_test.csv
+
+# Versiones de trabajo superadas por TP1_Analisis_Exploratorio_EDA.ipynb
+entrega_tp1_prediccion_eda.ipynb
+entrega_tp1_prediccion_eda_con_graficos.ipynb
+entrega_tp1_prediccion_eda.py
+
+# Basura habitual de Jupyter/Python
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
