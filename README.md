@@ -21,6 +21,15 @@ Continúa sobre el TP1: tratamiento formal de duplicados/nulos/outliers/valores 
 ### [TP3 — Modelos de Clasificación](TP3_Modelos_Clasificacion.ipynb)
 Entrenamiento y comparación de modelos: un baseline ingenuo y uno informado por reglas de negocio, un modelo lineal (Regresión Logística), modelos basados en árboles (Árbol de Decisión y Random Forest), y ajuste de hiperparámetros con validación cruzada — incluyendo ajuste del umbral de decisión y comparación de técnicas de balanceo de clases (`class_weight` vs. SMOTE). El modelo final recomendado es un **Random Forest** (F1 ≈ 0,64, AUC-PR ≈ 0,70 en evaluación).
 
+## Trabajo adicional (no asignado por la mentoría)
+
+### [Mejoras al modelo y consideraciones de producción](Mejoras_Modelo_y_Produccion.ipynb)
+Resuelve puntualmente cuatro "próximos pasos" que quedaron señalados en las conclusiones del TP3:
+1. **Corrige la fuga temporal** de las variables de comportamiento del cliente (se recalculan con ventana expansiva, usando solo transacciones anteriores) y reentrena el Random Forest -- su F1 real es 0,609, no el 0,638 original.
+2. **Ajusta el umbral de decisión** del Random Forest (en el TP3 solo se había hecho para la Regresión Logística) -- con umbral 0,42 el F1 sube a **0,643**, el mejor resultado del proyecto.
+3. **Entrena y ajusta un modelo de boosting** (`HistGradientBoostingClassifier`) y lo compara contra el Random Forest.
+4. **Desarrolla consideraciones de producción**: revisión humana en vez de bloqueo automático, y un chequeo real de *drift* sobre los propios datos que encontró algo importante -- la tasa de fraude se multiplica por ~40 (pesos) y ~10 (dólares) durante diciembre respecto del resto del año, un caso real de *concept drift* que quedó incorporado a la propuesta de monitoreo.
+
 ## Cómo correr los notebooks
 
-Cada notebook está pensado para correr en Google Colab: al ejecutar las primeras celdas, van a pedir subir los archivos de datos que necesitan (`Muestra.del` y `Dr_Muestra.xlsx` para el TP1 y TP2; `tp2_train.csv`/`tp2_test.csv`, generados por el TP2, para el TP3).
+Cada notebook está pensado para correr en Google Colab: al ejecutar las primeras celdas, van a pedir subir los archivos de datos que necesitan (`Muestra.del` y `Dr_Muestra.xlsx` para el TP1, TP2 y el notebook de mejoras; `tp2_train.csv`/`tp2_test.csv`, generados por el TP2, para el TP3).
