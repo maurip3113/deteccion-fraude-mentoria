@@ -5,6 +5,7 @@ valide, que las features historicas se calculen igual que en entrenamiento, y
 que el modelo distinga una transaccion sospechosa de una normal.
 """
 
+import sys
 from datetime import datetime
 
 import numpy as np
@@ -108,6 +109,13 @@ def test_entorno_desalineado_avisa():
     with pytest.warns(RuntimeWarning):
         diferencias = verificar_entorno({"scikit-learn": "0.0.1"})
     assert len(diferencias) == 1
+
+    # Un patch distinto de Python no rompe la carga y la imagen base avanza sola:
+    # avisar por eso convertiria la alerta en ruido permanente.
+    mayor_menor = ".".join(map(str, sys.version_info[:2]))
+    assert verificar_entorno({"python": f"{mayor_menor}.0"}) == []
+    with pytest.warns(RuntimeWarning):
+        assert verificar_entorno({"python": "3.0.0"}) != []
 
 
 def test_metrics_cuenta_las_predicciones():

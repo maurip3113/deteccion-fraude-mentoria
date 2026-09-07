@@ -99,6 +99,11 @@ def verificar_entorno(entrenamiento: dict) -> list[str]:
     Un desajuste aca no siempre explota: joblib puede cargar el modelo igual y
     devolver predicciones sutilmente distintas a las que se validaron. Mejor
     enterarse al arrancar que por una metrica rara semanas despues.
+
+    De Python se compara solo mayor.menor: la imagen base avanza de patch sola,
+    y avisar por eso haria que la alerta suene siempre hasta que nadie la mire.
+    De las librerias se compara la version exacta, que es lo que efectivamente
+    rompe la carga del artefacto.
     """
     import sklearn
     import xgboost
@@ -110,10 +115,13 @@ def verificar_entorno(entrenamiento: dict) -> list[str]:
         "numpy": np.__version__,
         "pandas": pd.__version__,
     }
+    def comparable(lib: str, version: str) -> str:
+        return ".".join(version.split(".")[:2]) if lib == "python" else version
+
     diferencias = [
         f"{lib}: entrenado con {v}, corriendo con {actual[lib]}"
         for lib, v in entrenamiento.items()
-        if lib in actual and actual[lib] != v
+        if lib in actual and comparable(lib, actual[lib]) != comparable(lib, v)
     ]
     for d in diferencias:
         warnings.warn(f"Desajuste de entorno -- {d}", RuntimeWarning, stacklevel=2)
