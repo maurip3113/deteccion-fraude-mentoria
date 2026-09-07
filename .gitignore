@@ -8,7 +8,13 @@ entrega_tp1_prediccion_eda.ipynb
 entrega_tp1_prediccion_eda_con_graficos.ipynb
 entrega_tp1_prediccion_eda.py
 
+# Salidas de ejecucion del servicio (los artefactos del modelo si se versionan)
+produccion/artifacts/predicciones.jsonl
+produccion/artifacts/reporte_monitoreo.json
+produccion/artifacts/log_reentrenamientos.jsonl
+
 # Basura habitual de Jupyter/Python
 .ipynb_checkpoints/
 __pycache__/
 *.pyc
+.pytest_cache/

@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "algoritmo": "XGBClassifier",
+  "entrenado_en": "2026-09-07T16:28:50.377392+00:00",
+  "hiperparametros": {
+    "scale_pos_weight": 159.84725848563968,
+    "random_state": 42,
+    "eval_metric": "aucpr",
+    "n_jobs": -1
+  },
+  "umbral_decision": 0.8491195440292358,
+  "umbral_elegido_en": "validacion",
+  "n_features": 23,
+  "features": [
+    "Trx_Importe",
+    "Es_Outlier_Importe",
+    "Hora_Dia",
+    "Es_Fin_de_Semana",
+    "Tiempo_Entre_Trx_Horas",
+    "Es_Moneda_Dolar",
+    "Cliente_Edad",
+    "Cliente_Trx_Count",
+    "Desvio_Importe_Cliente_Abs",
+    "Rubro_Categoria_TasaFraude",
+    "Cliente_Sexo_MASCULINO",
+    "Cliente_EstadoCivil_CONVIVIENTE",
+    "Cliente_EstadoCivil_DIVORCIADO/A",
+    "Cliente_EstadoCivil_SOLTERO/A",
+    "Cliente_EstadoCivil_VIUDO/A",
+    "Cliente_Segmento_S2",
+    "Cliente_Segmento_S3",
+    "Cliente_Segmento_S4",
+    "Cliente_Segmento_S5",
+    "Cliente_Segmento_S6",
+    "Cliente_Segmento_S7",
+    "Cliente_Segmento_S8",
+    "Presencia_Cliente_Presencial"
+  ],
+  "filas": {
+    "train": 123209,
+    "validacion": 30803,
+    "evaluacion": 38504
+  },
+  "tasa_fraude_train": 0.006217078297851618,
+  "metricas": {
+    "validacion": {
+      "precision": 0.6824324324324325,
+      "recall": 0.5287958115183246,
+      "f1": 0.5958702064896755,
+      "auc_roc": 0.9635065946147114,
+      "auc_pr": 0.5800243189695194,
+      "tasa_alertas": 0.004804726812323475
+    },
+    "evaluacion": {
+      "precision": 0.66,
+      "recall": 0.5523012552301255,
+      "f1": 0.6013667425968109,
+      "auc_roc": 0.9639726702192977,
+      "auc_pr": 0.6200439607296034,
+      "tasa_alertas": 0.005194265530853937
+    },
+    "evaluacion_umbral_05": {
+      "precision": 0.355119825708061,
+      "recall": 0.6820083682008368,
+      "f1": 0.4670487106017192,
+      "auc_roc": 0.9639726702192977,
+      "auc_pr": 0.6200439607296034,
+      "tasa_alertas": 0.011920839393309787
+    }
+  },
+  "hash_datos": "c4b0dec37bf03c06"
+}

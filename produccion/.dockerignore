@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+artifacts/predicciones.jsonl
+artifacts/reporte_monitoreo.json
+artifacts/log_reentrenamientos.jsonl
