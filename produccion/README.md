@@ -1,5 +1,7 @@
 # Puesta en producción del modelo de detección de fraude
 
+[![CI](https://github.com/maurip3113/deteccion-fraude-mentoria/actions/workflows/ci.yml/badge.svg)](https://github.com/maurip3113/deteccion-fraude-mentoria/actions/workflows/ci.yml)
+
 Este directorio toma el modelo que quedó entrenado en los notebooks del proyecto y lo convierte en un servicio: un artefacto versionado, una API que lo consulta en tiempo real, un chequeo de *drift* y un ciclo de reentrenamiento que decide si conviene reemplazarlo.
 
 La razón de que exista es que un modelo de riesgo no se entrega una vez. La parte difícil no es alcanzar un F1 aceptable en un notebook — es sostenerlo cuando los datos que llegan dejan de parecerse a los del entrenamiento. Los notebooks del proyecto llegan hasta el modelo entrenado; acá empieza lo que viene después.
@@ -60,6 +62,8 @@ python -m pytest tests/ -q
 ```bash
 docker build -t fraude-api . && docker run -p 8000:8000 fraude-api
 ```
+
+En cada push, [el workflow de CI](../.github/workflows/ci.yml) corre los tests, construye la imagen, levanta el contenedor y comprueba que `/health` y `/predict` respondan — así el despliegue queda verificado aunque la máquina de desarrollo no pueda correr Docker.
 
 ## Decisiones de diseño
 

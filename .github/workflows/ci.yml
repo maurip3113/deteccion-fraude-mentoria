@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Tests del servicio
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: produccion
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: produccion/requirements.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Correr los tests
+        run: python -m pytest tests/ -q
+
+  docker:
+    name: Imagen Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: produccion
+          load: true
+          tags: fraude-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Que la imagen construya no prueba nada: lo que importa es que el modelo
+      # cargue dentro del contenedor y que el endpoint devuelva una prediccion.
+      - name: Levantar el servicio
+        run: |
+          docker run -d --name fraude -p 8000:8000 fraude-api:ci
+          for intento in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "Servicio arriba tras $intento intento(s)."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "El servicio no respondio en 60 segundos."
+          docker logs fraude
+          exit 1
+
+      - name: Verificar /health
+        run: curl -s http://localhost:8000/health | tee /dev/stderr | jq -e '.estado == "ok"'
+
+      - name: Verificar /predict con una transaccion sospechosa
+        run: |
+          curl -sf -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "cliente_id": 101,
+              "trx_timestamp": "2025-12-24T03:47:00",
+              "trx_importe": 185000.0,
+              "trx_moneda": 1,
+              "trx_rubro_red": 5311,
+              "trx_tipo_terminal": 3,
+              "cliente_fecha_nacimiento": "1985-04-12",
+              "cliente_sexo": "MASCULINO",
+              "cliente_estado_civil": "SOLTERO/A",
+              "cliente_segmento": "S3"
+            }' | tee /dev/stderr \
+            | jq -e '.probabilidad_fraude >= 0 and .probabilidad_fraude <= 1'
+
+      - name: Avisar si el contenedor corre con otras versiones que el modelo
+        run: |
+          if docker logs fraude 2>&1 | grep -q "Desajuste de entorno"; then
+            echo "::warning::El contenedor no corre con las versiones que entrenaron el modelo."
+            docker logs fraude 2>&1 | grep "Desajuste de entorno"
+          else
+            echo "Entorno del contenedor alineado con el del entrenamiento."
+          fi
+
+      - name: Apagar el contenedor
+        if: always()
+        run: docker rm -f fraude
