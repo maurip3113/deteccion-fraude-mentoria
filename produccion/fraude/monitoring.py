@@ -154,7 +154,7 @@ def demo(path_datos: str, path_doc: str) -> dict:
     proba_dic = bundle["modelo"].predict_proba(X_dic)[:, 1]
 
     return reporte(X_ref, proba_ref, X_dic, proba_dic, bundle,
-                   y_nuevo=df_dic["Es_Fraude"], etiqueta="diciembre 2025 vs. resto del anio")
+                   y_nuevo=df_dic["Es_Fraude"], etiqueta="diciembre 2025 vs. resto del año")
 
 
 if __name__ == "__main__":

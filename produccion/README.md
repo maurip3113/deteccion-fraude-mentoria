@@ -51,6 +51,11 @@ python -m fraude.monitoring --demo
 Compara diciembre contra el resto del año y reporta drift.
 
 ```bash
+python -m fraude.dashboard
+```
+Convierte ese reporte en `artifacts/dashboard.html`: el JSON es para que lo consuma otro proceso, el tablero es para que una persona vea en cinco segundos si algo se movió y qué. Está ordenado por lo que decide una acción — primero el volumen de alertas, que es lo que satura al equipo de fraude, y recién después el detalle por variable.
+
+```bash
 python -m fraude.retrain
 ```
 Entrena un challenger con datos más recientes y decide si merece reemplazar al modelo en producción.
@@ -186,7 +191,7 @@ Vale la pena ser explícito sobre el límite de este ejercicio:
 - **El despliegue está escrito y verificado, pero nunca ejecutado contra AWS.** `aws/deploy.py` crea el endpoint y `aws/invoke.py` lo prueba; el contenedor cumple el contrato de SageMaker y el CI lo comprueba en cada push, pero nadie corrió todavía el `docker push` a ECR ni pagó por un endpoint.
 - **El reentrenamiento se dispara a mano.** Automatizarlo es un scheduler (EventBridge → SageMaker Pipeline o Step Functions), no un cambio de lógica.
 - **No hay registro formal de modelos.** `modelo_actual.txt` alcanza para un proyecto; en producción es SageMaker Model Registry o MLflow, con aprobación explícita para promover.
-- **El monitoreo escribe reportes, no dispara alertas.** Falta publicar las métricas a CloudWatch y conectar los umbrales de PSI a una notificación real.
+- **El tablero es una foto, no un servicio.** Se regenera corriendo el script; no hay histórico de corridas ni alertas automáticas. Falta publicar las métricas a CloudWatch y conectar los umbrales de PSI a una notificación real.
 
 ## Estructura
 
@@ -198,6 +203,7 @@ produccion/
 │   ├── api.py          # servicio FastAPI de scoring
 │   ├── explain.py      # SHAP por transaccion y auditoria global
 │   ├── monitoring.py   # PSI, KS y performance con etiquetas reales
+│   ├── dashboard.py    # tablero HTML a partir del reporte de monitoreo
 │   └── retrain.py      # champion/challenger con partición temporal
 ├── aws/
 │   ├── deploy.py       # crea el endpoint serverless de SageMaker
