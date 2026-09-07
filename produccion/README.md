@@ -111,15 +111,15 @@ El rol de ejecución necesita `AmazonSageMakerFullAccess` y permiso de lectura s
 
 **El umbral se elige en validación, no en evaluación.** Los notebooks eligen el umbral que maximiza F1 mirando el conjunto de test, y después reportan el F1 sobre ese mismo conjunto. Eso infla el número: el umbral ya vio los datos con los que se lo mide. Acá el histórico se parte en tres — entrenamiento, validación y evaluación — y el umbral sale de validación.
 
-**Alertar no es bloquear.** La respuesta de `/predict` incluye una acción (`revision_humana` / `aprobar`), no un bloqueo. Con una precisión del 66%, bloquear automáticamente significa frenar una transacción legítima de cada tres alertas.
+**Alertar no es bloquear.** La respuesta de `/predict` incluye una acción (`revision_humana` / `aprobar`), no un bloqueo. Con una precisión del 67%, bloquear automáticamente significa frenar una transacción legítima de cada tres alertas.
 
 **Y la alerta viene con su motivo.** Si el modelo manda una transacción a revisión humana pero no dice por qué, le deja al analista el trabajo entero. Cada respuesta incluye las variables que más pesaron, con su valor y hacia dónde empujaron:
 
 ```json
 "explicacion": [
-  {"variable": "horas desde la transaccion anterior", "valor": 19.22, "contribucion": -1.65, "empuja": "hacia legitima"},
-  {"variable": "hora del dia",                        "valor": 3.0,   "contribucion": +0.66, "empuja": "hacia fraude"},
-  {"variable": "transaccion presencial",              "valor": 0.0,   "contribucion": +0.64, "empuja": "hacia fraude"}
+  {"variable": "horas desde la transaccion anterior", "valor": 19.22, "contribucion": -1.29, "empuja": "hacia legitima"},
+  {"variable": "hora del dia",                        "valor": 3.0,   "contribucion": +0.92, "empuja": "hacia fraude"},
+  {"variable": "edad del cliente",                    "valor": 39.0,  "contribucion": -0.82, "empuja": "hacia legitima"}
 ]
 ```
 
@@ -135,7 +135,7 @@ Las contribuciones son aditivas en *log-odds*, no en probabilidad: no se leen co
 
 ## Lo que apareció al hacer esto
 
-**El F1 del proyecto estaba optimista, por dos motivos independientes.** Con el umbral elegido en validación en vez de en test, el F1 de evaluación queda en **0,601** (precisión 0,66 / recall 0,55 / AUC-PR 0,620), contra el 0,653 que reportan los notebooks. Parte de esa diferencia es el umbral; la otra parte es más seria y aparece abajo.
+**El F1 del proyecto estaba optimista, por dos motivos independientes.** Con el umbral elegido en validación en vez de en test, el F1 de evaluación queda en **0,599** (precisión 0,67 / recall 0,54 / AUC-PR 0,632), contra el 0,653 que reportan los notebooks. Parte de esa diferencia es el umbral; la otra parte es más seria y aparece abajo.
 
 **El fraude de este dataset está concentrado al final del año.**
 
@@ -149,7 +149,7 @@ De los 1.196 fraudes del año, 1.076 caen en noviembre y diciembre. Una partici�
 
 El análisis completo, con gráficos y sobre el Random Forest, está en la sección 5.3 del [notebook de mejoras](../Mejoras_Modelo_y_Produccion.ipynb).
 
-**Evaluado como se lo usaría de verdad, el modelo rinde mucho menos.** Entrenando con enero–agosto y evaluando sobre noviembre–diciembre, el F1 cae de 0,601 a **0,145**. Y agregarle septiembre–octubre al entrenamiento lo empeora todavía más en F1 (0,032) aunque le mejore el AUC-PR (+0,027).
+**Evaluado como se lo usaría de verdad, el modelo rinde mucho menos.** Entrenando con enero–agosto y evaluando sobre noviembre–diciembre, el F1 cae de 0,599 a **0,145**. Y agregarle septiembre–octubre al entrenamiento lo empeora todavía más en F1 (0,032) aunque le mejore el AUC-PR (+0,027).
 
 **Esa contradicción es el hallazgo central.** El AUC-PR sube — el modelo ordena *mejor* las transacciones por riesgo — mientras el F1 se desploma. La diferencia entera está en el umbral: con el umbral óptimo del propio período, el mismo challenger daría 0,274 en vez de 0,032. Es decir, **pierde 0,242 de F1 sólo por tener un umbral calibrado contra una tasa base veinte veces menor a la que enfrenta**.
 
@@ -159,26 +159,29 @@ La conclusión operativa no es "reentrenar más seguido". Es que el umbral no pu
 
 | Variable | Peso |
 |---|---|
-| `Rubro_Categoria_TasaFraude` | 36,9 % |
-| `Presencia_Cliente_Presencial` | 10,5 % |
-| `Trx_Importe` | 8,7 % |
-| `Cliente_Trx_Count` | 8,5 % |
+| `Rubro_Categoria_TasaFraude` | 36,5 % |
+| `Presencia_Cliente_Presencial` | 10,2 % |
+| `Trx_Importe` | 9,4 % |
+| `Cliente_Trx_Count` | 8,6 % |
 
 Que una sola variable concentre el 37% pedía explicación, sobre todo siendo un *target encoding*. Resultó no ser fuga —el encoding se ajusta sólo con entrenamiento— sino algo más simple: **la categoría `SIN RUBRO / NO APLICA` son 103.499 transacciones, el 54% del dataset, y no tiene ni un solo fraude.** Son movimientos que no son compras con tarjeta, así que la variable está separando sobre todo "esto es una compra en un comercio" de "esto es otra cosa".
 
 Eso tiene dos consecuencias concretas:
 
 - **La tasa de fraude relevante es 1,34%, no 0,62%** — la del subconjunto donde el fraude es posible. Es el número que importa para dimensionar la revisión.
-- **Infla `accuracy` y `AUC-ROC`, no F1 ni AUC-PR.** Restringiendo la evaluación a transacciones donde el fraude puede ocurrir, el AUC-ROC baja de 0,964 a **0,927**, mientras que F1 (0,601) y AUC-PR (0,620) no se mueven — porque no dependen de los verdaderos negativos que se quitaron. Es una confirmación de que estaba bien elegido liderar con F1 y AUC-PR.
+- **Infla `accuracy` y `AUC-ROC`, no F1 ni AUC-PR.** Restringiendo la evaluación a transacciones donde el fraude puede ocurrir, el AUC-ROC baja de 0,967 a **0,931**, mientras que F1 (0,599) y AUC-PR (0,632) no se mueven — porque no dependen de los verdaderos negativos que se quitaron. Es una confirmación de que estaba bien elegido liderar con F1 y AUC-PR.
 
-**Y un defecto real que hay que corregir:** el target encoding no está suavizado. `Hoteles y Alojamiento` recibe el valor de riesgo más alto de todo el mapa (0,143) estimado con **11 transacciones y 2 fraudes**; tres categorías tienen menos de 100 transacciones. Ese valor es ruido tratado como la señal de comercio más fuerte que tiene el modelo. La corrección estándar es suavizar hacia la tasa global en función del tamaño de cada categoría.
+**Y un defecto real, ya corregido:** el target encoding no estaba suavizado. `Hoteles y Alojamiento` recibía el valor de riesgo más alto de todo el mapa (**0,143**) estimado con **11 transacciones y 2 fraudes** — ruido tratado como la señal de comercio más fuerte del modelo. Ahora el encoding se suaviza hacia la tasa global en proporción a lo poco que se sabe de cada categoría, y ese valor pasa a **0,023** mientras las categorías grandes quedan intactas (`Comercio Mayorista`, 25.272 filas: 0,0030 → 0,0030).
+
+La corrección vive sólo acá, no en los notebooks: el TP2 define el encoding sin suavizar y esa es la entrega tal como se hizo. Es una divergencia deliberada entre el pipeline del curso y el de producción, y explica por qué los números de esta carpeta no coinciden exactamente con los de los notebooks.
+
+Vale aclarar por qué se hizo igual: **no mejora las métricas**. Probando el parámetro de suavizado en 0, 10, 50 y 200, el F1 de validación va de 0,596 a 0,623 y el de evaluación se mueve entre 0,599 y 0,635 sin un ganador claro — diferencias dentro del ruido que ya conocemos, con sólo 239 fraudes en evaluación. La justificación es **robustez, no ganancia medida**: se elimina la posibilidad de que dos casos definan la señal de comercio más fuerte del modelo. Se tomó 50 por ser el mejor en F1 de validación, sabiendo que la elección entre 10 y 200 es indistinguible con estos datos.
 
 ## Lo que falta para que esto sea producción de verdad
 
 Vale la pena ser explícito sobre el límite de este ejercicio:
 
 - **El estado de clientes vive en memoria del proceso.** Se reinicia con el servicio y no se comparte entre réplicas — por eso `/invocations` lo usa de sólo lectura. Es el pendiente más importante: en producción va a DynamoDB, Redis o un feature store gestionado, y recién ahí el endpoint puede incorporar la transacción que acaba de puntuar al historial del cliente.
-- **El target encoding de rubro no está suavizado** (ver arriba): una categoría con 11 transacciones recibe el valor de riesgo más alto del mapa. Es el defecto más concreto pendiente.
 - **No hay autenticación, rate limiting ni trazas distribuidas.** En SageMaker la autenticación la resuelve IAM, pero un consumidor externo necesitaría API Gateway adelante.
 - **El despliegue está escrito y verificado, pero nunca ejecutado contra AWS.** `aws/deploy.py` crea el endpoint y `aws/invoke.py` lo prueba; el contenedor cumple el contrato de SageMaker y el CI lo comprueba en cada push, pero nadie corrió todavía el `docker push` a ECR ni pagó por un endpoint.
 - **El reentrenamiento se dispara a mano.** Automatizarlo es un scheduler (EventBridge → SageMaker Pipeline o Step Functions), no un cambio de lógica.

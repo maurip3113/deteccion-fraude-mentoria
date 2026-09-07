@@ -112,6 +112,9 @@ class PreprocesadorFraude:
     lim_outlier_sup: float = 0.0
     mediana_tiempo: float = 0.0
     tasa_fraude_global: float = 0.0
+    # Peso del prior en el target encoding: cuantas observaciones necesita una
+    # categoria para que su propia tasa pese tanto como la tasa global.
+    suavizado_rubro: float = 50.0
     mapa_rubro: dict[str, float] = field(default_factory=dict)
     mapa_rubro_codigo: dict[int, str] = field(default_factory=dict)
     fecha_referencia_edad: str = "2025-01-01"
@@ -124,9 +127,20 @@ class PreprocesadorFraude:
         self.lim_outlier_sup = float(q3 + 1.5 * iqr)
 
         self.mediana_tiempo = float(df_train["Tiempo_Entre_Trx_Horas"].median())
+        # Target encoding suavizado hacia la tasa global. Sin suavizar, una
+        # categoria con 11 transacciones y 2 fraudes recibe una tasa del 18% y se
+        # vuelve la senal de comercio mas fuerte del modelo, cuando en realidad
+        # son dos casos. El prior la corrige en proporcion a lo poco que se sabe
+        # de esa categoria, y deja practicamente intactas a las grandes.
         self.tasa_fraude_global = float(y_train.mean())
+        conteos = df_train["Rubro_Categoria"].value_counts()
+        sumas = y_train.groupby(df_train["Rubro_Categoria"]).sum()
         self.mapa_rubro = {
-            str(k): float(v) for k, v in y_train.groupby(df_train["Rubro_Categoria"]).mean().items()
+            str(categoria): float(
+                (sumas[categoria] + self.suavizado_rubro * self.tasa_fraude_global)
+                / (n + self.suavizado_rubro)
+            )
+            for categoria, n in conteos.items()
         }
 
         X = self.transform(df_train, alinear=False)
