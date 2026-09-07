@@ -1,0 +1,6 @@
+# Los scripts que corren dentro del contenedor tienen que quedar con fin de linea
+# LF aunque se los edite en Windows: con CRLF, Linux lee el shebang como
+# "/bin/sh\r" y falla con un "not found" que no dice nada de la causa real.
+*.sh text eol=lf
+Dockerfile text eol=lf
+entrypoint.sh text eol=lf
