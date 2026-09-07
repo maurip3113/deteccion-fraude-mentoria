@@ -50,7 +50,7 @@ jobs:
       # cargue dentro del contenedor y que el endpoint devuelva una prediccion.
       - name: Levantar el servicio
         run: |
-          docker run -d --name fraude -p 8000:8000 fraude-api:ci
+          docker run -d --name fraude -p 8000:8080 fraude-api:ci serve
           for intento in $(seq 1 30); do
             if curl -sf http://localhost:8000/health > /dev/null; then
               echo "Servicio arriba tras $intento intento(s)."
@@ -64,6 +64,25 @@ jobs:
 
       - name: Verificar /health
         run: curl -s http://localhost:8000/health | tee /dev/stderr | jq -e '.estado == "ok"'
+
+      # Las dos rutas que exige un endpoint de SageMaker con contenedor propio.
+      - name: Verificar el contrato de SageMaker
+        run: |
+          curl -sf http://localhost:8000/ping | jq -e '.estado == "ok"'
+          curl -sf -X POST http://localhost:8000/invocations \
+            -H 'Content-Type: application/json' \
+            -d '[{
+              "cliente_id": 101,
+              "trx_timestamp": "2025-12-24T03:47:00",
+              "trx_importe": 185000.0,
+              "trx_moneda": 1,
+              "trx_rubro_red": 5311,
+              "trx_tipo_terminal": 3,
+              "cliente_fecha_nacimiento": "1985-04-12",
+              "cliente_sexo": "MASCULINO",
+              "cliente_estado_civil": "SOLTERO/A",
+              "cliente_segmento": "S3"
+            }]' | tee /dev/stderr | jq -e 'length == 1 and .[0].probabilidad_fraude >= 0'
 
       - name: Verificar /predict con una transaccion sospechosa
         run: |

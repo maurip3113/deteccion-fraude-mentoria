@@ -63,7 +63,45 @@ python -m pytest tests/ -q
 docker build -t fraude-api . && docker run -p 8000:8000 fraude-api
 ```
 
-En cada push, [el workflow de CI](../.github/workflows/ci.yml) corre los tests, construye la imagen, levanta el contenedor y comprueba que `/health` y `/predict` respondan — así el despliegue queda verificado aunque la máquina de desarrollo no pueda correr Docker.
+En cada push, [el workflow de CI](../.github/workflows/ci.yml) corre los tests, construye la imagen, levanta el contenedor y comprueba que `/health`, `/predict`, `/ping` e `/invocations` respondan — así el despliegue queda verificado aunque la máquina de desarrollo no pueda correr Docker.
+
+## Despliegue en SageMaker
+
+La misma imagen sirve como endpoint de SageMaker: un endpoint con contenedor propio sólo exige exponer `GET /ping` y `POST /invocations`, y escuchar en el puerto 8080. Ambas rutas están en [`api.py`](fraude/api.py) reusando la app existente.
+
+**Por qué contenedor propio y no el contenedor gestionado de XGBoost.** El contenedor que AWS provee para XGBoost espera recibir el vector de features ya armado. Pero acá el trabajo difícil está justo antes: `Cliente_Trx_Count`, `Tiempo_Entre_Trx_Horas` y `Desvio_Importe_Cliente_Abs` dependen del historial del cliente, no de la transacción. Usar el contenedor gestionado obligaría a reimplementar esa lógica del lado del cliente y a mantener dos copias en sincronía — exactamente el *training/serving skew* que [`features.py`](fraude/features.py) existe para evitar. Traer el contenedor propio cuesta un `docker push` y elimina el problema.
+
+Los scripts de despliegue necesitan `pip install boto3`, que a propósito no está en `requirements.txt`: son herramientas de operación y no tienen por qué viajar dentro de la imagen que sirve el modelo.
+
+```bash
+# 1. Publicar la imagen en ECR
+aws ecr create-repository --repository-name deteccion-fraude
+aws ecr get-login-password --region us-east-1 \
+  | docker login --username AWS --password-stdin <cuenta>.dkr.ecr.us-east-1.amazonaws.com
+docker build -t deteccion-fraude .
+docker tag deteccion-fraude:latest <cuenta>.dkr.ecr.us-east-1.amazonaws.com/deteccion-fraude:v1
+docker push <cuenta>.dkr.ecr.us-east-1.amazonaws.com/deteccion-fraude:v1
+```
+
+```bash
+# 2. Crear el endpoint serverless
+python -m aws.deploy --rol arn:aws:iam::<cuenta>:role/<rol-sagemaker> \
+                     --imagen <cuenta>.dkr.ecr.us-east-1.amazonaws.com/deteccion-fraude:v1
+```
+
+```bash
+# 3. Verificar que discrimine, no sólo que responda
+python -m aws.invoke --region us-east-1
+```
+
+```bash
+# 4. Borrarlo al terminar
+python -m aws.deploy --borrar
+```
+
+El rol de ejecución necesita `AmazonSageMakerFullAccess` y permiso de lectura sobre el repositorio de ECR. Se eligió **serverless** porque este endpoint recibiría tráfico esporádico: no hay costo por hora mientras nadie lo invoca, a cambio de latencia de arranque en frío. Un endpoint *real-time* tiene sentido recién con tráfico sostenido, donde el arranque en frío deja de amortizarse. Conviene mirar la calculadora de precios de AWS antes de crear nada, y borrar el endpoint al terminar.
+
+**Una diferencia deliberada con el servicio local:** `/invocations` no actualiza el estado del cliente, mientras que `/predict` sí. Un endpoint corre en varias réplicas que no comparten memoria y se reciclan solas, así que un acumulado en RAM daría respuestas distintas según qué réplica atienda y se perdería en cada arranque en frío. El estado se usa de sólo lectura, tal como quedó al entrenar. Resolverlo de verdad es moverlo a DynamoDB o a un feature store — el pendiente principal de la lista de abajo.
 
 ## Decisiones de diseño
 
@@ -105,9 +143,9 @@ La conclusión operativa no es "reentrenar más seguido". Es que el umbral no pu
 
 Vale la pena ser explícito sobre el límite de este ejercicio:
 
-- **El estado de clientes vive en memoria del proceso.** Se reinicia con el servicio y no se comparte entre réplicas. En producción va a Redis, DynamoDB o un feature store gestionado.
-- **No hay autenticación, rate limiting ni trazas distribuidas.**
-- **El despliegue está containerizado pero no desplegado.** El paso natural es un endpoint de SageMaker (serverless para este volumen) o el contenedor en ECS/Fargate detrás de API Gateway.
+- **El estado de clientes vive en memoria del proceso.** Se reinicia con el servicio y no se comparte entre réplicas — por eso `/invocations` lo usa de sólo lectura. Es el pendiente más importante: en producción va a DynamoDB, Redis o un feature store gestionado, y recién ahí el endpoint puede incorporar la transacción que acaba de puntuar al historial del cliente.
+- **No hay autenticación, rate limiting ni trazas distribuidas.** En SageMaker la autenticación la resuelve IAM, pero un consumidor externo necesitaría API Gateway adelante.
+- **El despliegue está escrito y verificado, pero nunca ejecutado contra AWS.** `aws/deploy.py` crea el endpoint y `aws/invoke.py` lo prueba; el contenedor cumple el contrato de SageMaker y el CI lo comprueba en cada push, pero nadie corrió todavía el `docker push` a ECR ni pagó por un endpoint.
 - **El reentrenamiento se dispara a mano.** Automatizarlo es un scheduler (EventBridge → SageMaker Pipeline o Step Functions), no un cambio de lógica.
 - **No hay registro formal de modelos.** `modelo_actual.txt` alcanza para un proyecto; en producción es SageMaker Model Registry o MLflow, con aprobación explícita para promover.
 - **El monitoreo escribe reportes, no dispara alertas.** Falta publicar las métricas a CloudWatch y conectar los umbrales de PSI a una notificación real.
@@ -122,8 +160,12 @@ produccion/
 │   ├── api.py          # servicio FastAPI de scoring
 │   ├── monitoring.py   # PSI, KS y performance con etiquetas reales
 │   └── retrain.py      # champion/challenger con partición temporal
+├── aws/
+│   ├── deploy.py       # crea el endpoint serverless de SageMaker
+│   └── invoke.py       # verificación post-despliegue
 ├── artifacts/          # modelos versionados, metadata y logs
 ├── tests/
 ├── Dockerfile
+├── entrypoint.sh
 └── requirements.txt
 ```

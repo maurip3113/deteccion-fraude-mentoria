@@ -118,6 +118,30 @@ def test_entorno_desalineado_avisa():
         assert verificar_entorno({"python": "3.0.0"}) != []
 
 
+def test_contrato_de_sagemaker():
+    """Las dos rutas que exige un endpoint con contenedor propio."""
+    assert cliente.get("/ping").status_code == 200
+
+    unica = cliente.post("/invocations", json=TRX_BASE)
+    assert unica.status_code == 200
+    assert 0.0 <= unica.json()["probabilidad_fraude"] <= 1.0
+
+    lote = cliente.post("/invocations", json=[TRX_BASE, TRX_BASE])
+    assert lote.status_code == 200
+    assert len(lote.json()) == 2
+
+
+def test_invocations_no_modifica_el_estado_del_cliente():
+    """El endpoint es de solo lectura: varias replicas no comparten memoria.
+
+    Si acumulara historia, dos replicas darian respuestas distintas para la misma
+    transaccion y todo se perderia en cada arranque en frio.
+    """
+    respuestas = cliente.post("/invocations", json=[TRX_BASE, TRX_BASE, TRX_BASE]).json()
+    probabilidades = {r["probabilidad_fraude"] for r in respuestas}
+    assert len(probabilidades) == 1
+
+
 def test_metrics_cuenta_las_predicciones():
     antes = cliente.get("/metrics").json()["predicciones_totales"]
     cliente.post("/predict", json=TRX_BASE, params={"actualizar_estado": False})

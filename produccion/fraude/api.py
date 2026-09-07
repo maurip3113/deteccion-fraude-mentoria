@@ -189,14 +189,22 @@ def predict(trx: Transaccion, actualizar_estado: bool = True) -> Prediccion:
     PROBABILIDADES_RECIENTES.append(proba)
 
     latencia = (time.perf_counter() - inicio) * 1000
-    with LOG_PREDICCIONES.open("a", encoding="utf-8") as f:
-        f.write(json.dumps({
-            "ts": datetime.now().isoformat(),
-            "cliente_id": trx.cliente_id,
-            "proba": round(proba, 6),
-            "alerta": alerta,
-            "version": BUNDLE["version"],
-        }) + "\n")
+    registro = json.dumps({
+        "ts": datetime.now().isoformat(),
+        "cliente_id": trx.cliente_id,
+        "proba": round(proba, 6),
+        "alerta": alerta,
+        "version": BUNDLE["version"],
+    })
+    # stdout es lo que recogen CloudWatch y `docker logs`; el archivo es una
+    # comodidad local y no puede hacer fallar una prediccion si el disco es de
+    # solo lectura, como pasa dentro de un contenedor gestionado.
+    print(registro, flush=True)
+    try:
+        with LOG_PREDICCIONES.open("a", encoding="utf-8") as f:
+            f.write(registro + "\n")
+    except OSError:
+        pass
 
     return Prediccion(
         cliente_id=trx.cliente_id,
@@ -210,6 +218,35 @@ def predict(trx: Transaccion, actualizar_estado: bool = True) -> Prediccion:
         cliente_conocido=conocido,
         latencia_ms=round(latencia, 2),
     )
+
+
+# ---------------------------------------------------------------------------
+# Contrato de SageMaker
+#
+# Un endpoint con contenedor propio tiene que exponer exactamente dos rutas:
+# GET /ping para el health check y POST /invocations para inferir. Se resuelven
+# reusando la misma app en vez de escribir un handler aparte, que obligaria a
+# duplicar la ingenieria de variables -- justo lo que features.py evita.
+# ---------------------------------------------------------------------------
+
+@app.get("/ping", summary="Health check que exige SageMaker")
+def ping() -> dict:
+    return {"estado": "ok"}
+
+
+@app.post("/invocations", summary="Inferencia en el formato que espera SageMaker")
+def invocations(payload: Transaccion | list[Transaccion]) -> Prediccion | list[Prediccion]:
+    """Acepta una transaccion o un lote.
+
+    A diferencia de `/predict`, no actualiza el estado del cliente. El endpoint
+    corre en varias instancias que no comparten memoria y que se reciclan solas,
+    asi que un acumulado en RAM seria inconsistente entre replicas y se perderia
+    en cada arranque en frio. El estado se usa de solo lectura, tal como quedo al
+    entrenar; moverlo a un feature store es el paso pendiente documentado.
+    """
+    if isinstance(payload, list):
+        return [predict(trx, actualizar_estado=False) for trx in payload]
+    return predict(payload, actualizar_estado=False)
 
 
 @app.get("/health", summary="Estado del servicio")

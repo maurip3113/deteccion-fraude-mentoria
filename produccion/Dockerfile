@@ -10,14 +10,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY fraude/ ./fraude/
 COPY artifacts/ ./artifacts/
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 # Usuario sin privilegios: si alguien escapa del proceso, no es root.
 RUN useradd --create-home --shell /bin/bash servicio && chown -R servicio:servicio /app
 USER servicio
 
-EXPOSE 8000
+# 8080 es el puerto que exige un endpoint de SageMaker con contenedor propio.
+ENV PORT=8080
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+    CMD python -c "import os,urllib.request; urllib.request.urlopen(f\"http://localhost:{os.environ['PORT']}/ping\")"
 
-CMD ["uvicorn", "fraude.api:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/entrypoint.sh"]
