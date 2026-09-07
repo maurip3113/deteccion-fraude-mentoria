@@ -131,7 +131,9 @@ El rol de ejecución necesita `AmazonSageMakerFullAccess` y permiso de lectura s
 
 De los 1.196 fraudes del año, 1.076 caen en noviembre y diciembre. Una partición aleatoria le permite al modelo entrenar con fraude de diciembre y después evaluarse contra fraude de diciembre — que es exactamente lo que nunca va a poder hacer en producción.
 
-El mismo análisis, hecho sobre el Random Forest y con gráficos, está en la sección 5.3 del [notebook de mejoras](../Mejoras_Modelo_y_Produccion.ipynb).
+**Y a nivel cliente el patrón es más raro todavía.** El 49% de los clientes del dataset sufrió fraude alguna vez en el año — muy por encima de cualquier cartera real — y 315 de los 352 afectados estrenan su primer fraude en noviembre o diciembre. Con un solo año eso admite dos lecturas que no se pueden separar: un episodio real de fraude, o una muestra construida seleccionando clientes afectados en esa ventana. Si vale la segunda, el 0,62% de tasa de fraude no es el de la población, y `scale_pos_weight`, el umbral y el volumen de alertas esperado quedan calibrados contra un número que en producción no existe. Es la primera pregunta a hacerle a quien provee los datos.
+
+El análisis completo, con gráficos y sobre el Random Forest, está en la sección 5.3 del [notebook de mejoras](../Mejoras_Modelo_y_Produccion.ipynb).
 
 **Evaluado como se lo usaría de verdad, el modelo rinde mucho menos.** Entrenando con enero–agosto y evaluando sobre noviembre–diciembre, el F1 cae de 0,601 a **0,145**. Y agregarle septiembre–octubre al entrenamiento lo empeora todavía más en F1 (0,032) aunque le mejore el AUC-PR (+0,027).
 

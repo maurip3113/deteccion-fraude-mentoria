@@ -133,9 +133,12 @@ def reporte(X_ref, proba_ref, X_nuevo, proba_nuevo, bundle, y_nuevo=None, etique
 def demo(path_datos: str, path_doc: str) -> dict:
     """Compara diciembre contra el resto del anio.
 
-    El notebook de mejoras detecto que la tasa de fraude se multiplica por ~40 en
-    diciembre. Es el caso de *concept drift* real que tiene este dataset, asi que
-    sirve como prueba de que el monitoreo efectivamente lo levanta.
+    La tasa de fraude se multiplica por ~40 en diciembre, asi que sirve como
+    prueba de que el monitoreo levanta un cambio grande. Si ese salto es un
+    episodio real de fraude o una consecuencia de como se armo la muestra es algo
+    que el dataset no permite decidir (ver seccion 5.3 del notebook de mejoras) --
+    para el monitoreo da lo mismo: en produccion tampoco se sabe la causa al
+    momento de la alerta, y la respuesta operativa es la misma.
     """
     bundle = cargar_bundle()
     prep = bundle["preprocesador"]
