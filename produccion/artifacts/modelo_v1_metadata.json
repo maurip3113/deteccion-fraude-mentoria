@@ -1,7 +1,7 @@
 {
   "version": 1,
   "algoritmo": "XGBClassifier",
-  "entrenado_en": "2026-09-07T16:28:50.377392+00:00",
+  "entrenado_en": "2026-09-07T16:54:43.707066+00:00",
   "hiperparametros": {
     "scale_pos_weight": 159.84725848563968,
     "random_state": 42,
@@ -67,6 +67,13 @@
       "auc_pr": 0.6200439607296034,
       "tasa_alertas": 0.011920839393309787
     }
+  },
+  "entorno": {
+    "python": "3.13.5",
+    "scikit-learn": "1.9.0",
+    "xgboost": "3.4.1",
+    "numpy": "2.3.2",
+    "pandas": "2.3.2"
   },
   "hash_datos": "c4b0dec37bf03c06"
 }

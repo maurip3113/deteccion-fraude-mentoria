@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+# Misma version menor de Python con la que se entreno y serializo el modelo.
+FROM python:3.13-slim
 
 WORKDIR /app
 

@@ -71,6 +71,8 @@ docker build -t fraude-api . && docker run -p 8000:8000 fraude-api
 
 **Alertar no es bloquear.** La respuesta de `/predict` incluye una acción (`revision_humana` / `aprobar`), no un bloqueo. Con una precisión del 66%, bloquear automáticamente significa frenar una transacción legítima de cada tres alertas.
 
+**El artefacto declara con qué versiones se entrenó.** `joblib` guarda referencias a las clases de la librería que creó el modelo: cargar en el contenedor un `.joblib` serializado con otra versión de scikit-learn o xgboost falla, o —peor— funciona devolviendo predicciones sutilmente distintas a las que se validaron. Cada modelo guarda su `entorno` y la API lo compara al arrancar. `requirements.txt` está fijado a esas versiones exactas, y al reentrenar con librerías nuevas hay que actualizarlo en el mismo commit.
+
 **Reemplazar el modelo exige ganar por un margen.** `retrain.py` promueve el challenger sólo si mejora el F1 en más de 0,01. Cambiar el modelo tiene un costo operativo — revalidación, aviso al equipo de fraude, recalibración de umbrales — que una diferencia del tamaño del ruido no justifica.
 
 **La partición del reentrenamiento es temporal, no aleatoria.** Con partición aleatoria el reentrenamiento siempre parece funcionar, porque entrenamiento y evaluación comparten el mismo período. El punto de reentrenar es responder a que el mundo cambió con el tiempo, y eso sólo se ve evaluando hacia adelante.

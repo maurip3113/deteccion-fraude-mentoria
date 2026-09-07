@@ -11,13 +11,16 @@ de alertar o no.
 from __future__ import annotations
 
 import json
+import sys
 import time
+import warnings
 from collections import deque
 from datetime import date, datetime
 from pathlib import Path
 from typing import Literal
 
 import joblib
+import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -85,7 +88,36 @@ def cargar_bundle(version: int | None = None) -> dict:
                 "No hay modelo entrenado. Corre primero: python -m fraude.train"
             )
         version = int(puntero.read_text().strip())
-    return joblib.load(DIR_ARTEFACTOS / f"modelo_v{version}.joblib")
+    bundle = joblib.load(DIR_ARTEFACTOS / f"modelo_v{version}.joblib")
+    verificar_entorno(bundle.get("entorno", {}))
+    return bundle
+
+
+def verificar_entorno(entrenamiento: dict) -> list[str]:
+    """Avisa si el servicio corre con versiones distintas a las que entrenaron.
+
+    Un desajuste aca no siempre explota: joblib puede cargar el modelo igual y
+    devolver predicciones sutilmente distintas a las que se validaron. Mejor
+    enterarse al arrancar que por una metrica rara semanas despues.
+    """
+    import sklearn
+    import xgboost
+
+    actual = {
+        "python": ".".join(map(str, sys.version_info[:3])),
+        "scikit-learn": sklearn.__version__,
+        "xgboost": xgboost.__version__,
+        "numpy": np.__version__,
+        "pandas": pd.__version__,
+    }
+    diferencias = [
+        f"{lib}: entrenado con {v}, corriendo con {actual[lib]}"
+        for lib, v in entrenamiento.items()
+        if lib in actual and actual[lib] != v
+    ]
+    for d in diferencias:
+        warnings.warn(f"Desajuste de entorno -- {d}", RuntimeWarning, stacklevel=2)
+    return diferencias
 
 
 app = FastAPI(

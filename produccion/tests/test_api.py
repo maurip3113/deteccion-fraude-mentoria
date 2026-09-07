@@ -10,9 +10,10 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pytest
+import sklearn
 from fastapi.testclient import TestClient
 
-from fraude.api import app
+from fraude.api import app, verificar_entorno
 from fraude.features import EstadoClientes
 
 cliente = TestClient(app)
@@ -98,6 +99,15 @@ def test_estado_del_cliente_replica_la_ventana_expansiva():
             assert features["Desvio_Importe_Cliente_Abs"] == pytest.approx(abs(z), rel=1e-9)
 
         estado.actualizar(1, importe, momento)
+
+
+def test_entorno_desalineado_avisa():
+    """El artefacto declara con que versiones se entreno; cargarlo con otras avisa."""
+    assert verificar_entorno({"scikit-learn": sklearn.__version__}) == []
+
+    with pytest.warns(RuntimeWarning):
+        diferencias = verificar_entorno({"scikit-learn": "0.0.1"})
+    assert len(diferencias) == 1
 
 
 def test_metrics_cuenta_las_predicciones():

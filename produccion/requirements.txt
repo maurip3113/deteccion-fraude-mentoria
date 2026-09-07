@@ -1,12 +1,17 @@
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pandas==2.2.3
-numpy==2.2.1
-scikit-learn==1.6.0
-xgboost==2.1.3
-scipy==1.15.0
-joblib==1.4.2
+# Versiones fijadas a las que efectivamente generaron artifacts/modelo_v1.joblib.
+# Un modelo serializado con joblib guarda referencias a las clases de la libreria
+# que lo creo: si el contenedor instala otra version de scikit-learn o xgboost,
+# la carga falla o -peor- funciona con un comportamiento distinto al validado.
+# Al reentrenar con versiones nuevas, actualizar este archivo en el mismo commit.
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+pydantic==2.13.4
+pandas==2.3.2
+numpy==2.3.2
+scikit-learn==1.9.0
+xgboost==3.4.1
+scipy==1.18.0
+joblib==1.5.3
 openpyxl==3.1.5
-pytest==8.3.4
+pytest==9.1.1
 httpx==0.28.1

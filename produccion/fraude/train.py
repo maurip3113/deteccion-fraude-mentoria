@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,6 +33,25 @@ from fraude.features import EstadoClientes, PreprocesadorFraude, cargar_historic
 
 DIR_ARTEFACTOS = Path(__file__).resolve().parent.parent / "artifacts"
 SEMILLA = 42
+
+
+def entorno() -> dict:
+    """Versiones con las que se genero el artefacto.
+
+    joblib serializa referencias a las clases de la libreria que creo el modelo:
+    cargarlo con otra version de scikit-learn o xgboost falla, o corre con un
+    comportamiento distinto al que se valido. Guardarlas permite comparar al
+    levantar el servicio en vez de descubrirlo en produccion.
+    """
+    import sklearn
+    import xgboost
+    return {
+        "python": ".".join(map(str, sys.version_info[:3])),
+        "scikit-learn": sklearn.__version__,
+        "xgboost": xgboost.__version__,
+        "numpy": np.__version__,
+        "pandas": pd.__version__,
+    }
 
 
 def evaluar(y_true, y_proba, umbral: float) -> dict:
@@ -164,6 +184,7 @@ def entrenar(path_datos: str, path_doc: str, version: int | None = None) -> dict
         "preprocesador": prep,
         "umbral": umbral,
         "version": version,
+        "entorno": entorno(),
         "estado_clientes": EstadoClientes.desde_historico(df),
         "referencia_drift": referencia_drift(X_train),
     }
@@ -182,6 +203,7 @@ def entrenar(path_datos: str, path_doc: str, version: int | None = None) -> dict
         "filas": {"train": len(df_train), "validacion": len(df_val), "evaluacion": len(df_test)},
         "tasa_fraude_train": float(y_train.mean()),
         "metricas": metricas,
+        "entorno": entorno(),
         "hash_datos": hashlib.sha256(Path(path_datos).read_bytes()).hexdigest()[:16],
     }
     (DIR_ARTEFACTOS / f"modelo_v{version}_metadata.json").write_text(
