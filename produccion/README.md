@@ -136,6 +136,8 @@ Las contribuciones son aditivas en *log-odds*, no en probabilidad: no se leen co
 
 **Reemplazar el modelo exige ganar por un margen.** `retrain.py` promueve el challenger sólo si mejora el F1 en más de 0,01. Cambiar el modelo tiene un costo operativo — revalidación, aviso al equipo de fraude, recalibración de umbrales — que una diferencia del tamaño del ruido no justifica.
 
+**Los contadores acumulados no cuentan como drift.** `Cliente_Trx_Count` es la cantidad de transacciones previas del cliente: crece con el calendario, así que en diciembre se aparta del entrenamiento (media 266 → 503, PSI 0,67) por el paso del tiempo y no porque algo haya fallado. Medirlo contra una referencia congelada produce una alarma que suena siempre, y una alarma que suena siempre deja de mirarse. Se sigue calculando su PSI —una caída repentina sí significaría algo— pero queda marcado como `estructural` y no dispara nada. Con esa corrección la alarma de diciembre sigue activándose, ahora por la razón correcta: el volumen de alertas, no un contador contando.
+
 **La partición del reentrenamiento es temporal, no aleatoria.** Con partición aleatoria el reentrenamiento siempre parece funcionar, porque entrenamiento y evaluación comparten el mismo período. El punto de reentrenar es responder a que el mundo cambió con el tiempo, y eso sólo se ve evaluando hacia adelante.
 
 ## Lo que apareció al hacer esto

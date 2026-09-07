@@ -26,11 +26,15 @@ import pandas as pd
 from scipy.stats import ks_2samp
 
 from fraude.api import cargar_bundle
-from fraude.features import cargar_historico
+from fraude.features import VARIABLES_MONOTONAS, cargar_historico
 from fraude.train import evaluar
 
 UMBRAL_PSI_MODERADO = 0.10
 UMBRAL_PSI_SEVERO = 0.25
+
+# Estados que no cuentan como drift: la variable esta quieta, o se movio por una
+# razon que ya conocemos y que no dice nada sobre la salud del modelo.
+ESTADOS_SIN_DRIFT = ("estable", "estructural")
 
 
 def psi(proporciones_ref: np.ndarray, proporciones_nuevas: np.ndarray) -> float:
@@ -67,7 +71,9 @@ def drift_de_datos(X_nuevo: pd.DataFrame, referencia: dict, X_ref: pd.DataFrame 
             "variable": col,
             "tipo": ref["tipo"],
             "psi": round(valor_psi, 4),
-            "estado": clasificar(valor_psi),
+            # El PSI se calcula igual --una caida repentina de un contador si
+            # significaria algo-- pero no cuenta como drift ni dispara alarma.
+            "estado": "estructural" if col in VARIABLES_MONOTONAS else clasificar(valor_psi),
             "media_train": round(ref["media"], 4),
             "media_batch": round(float(valores.mean()), 4),
         }
@@ -96,9 +102,13 @@ def reporte(X_ref, proba_ref, X_nuevo, proba_nuevo, bundle, y_nuevo=None, etique
     print("\n-- Drift de datos (PSI por variable, top 8) --")
     print(tabla.head(8).to_string(index=False))
 
-    severos = tabla[tabla["estado"] != "estable"]
-    print(f"\n   {len(severos)} de {len(tabla)} variables con drift detectable "
+    con_drift = tabla[~tabla["estado"].isin(ESTADOS_SIN_DRIFT)]
+    estructurales = tabla[tabla["estado"] == "estructural"]
+    print(f"\n   {len(con_drift)} de {len(tabla)} variables con drift detectable "
           f"(PSI >= {UMBRAL_PSI_MODERADO}).")
+    if len(estructurales):
+        print(f"   {len(estructurales)} excluida(s) por crecer con el calendario: "
+              f"{', '.join(estructurales['variable'])}.")
 
     print("\n-- Drift de predicciones --")
     for k, v in predicciones.items():
@@ -111,7 +121,8 @@ def reporte(X_ref, proba_ref, X_nuevo, proba_nuevo, bundle, y_nuevo=None, etique
         "modelo_version": bundle["version"],
         "n_transacciones": len(X_nuevo),
         "drift_datos": tabla.to_dict("records"),
-        "variables_con_drift": int((tabla["estado"] != "estable").sum()),
+        "variables_con_drift": int((~tabla["estado"].isin(ESTADOS_SIN_DRIFT)).sum()),
+        "variables_estructurales": int((tabla["estado"] == "estructural").sum()),
         "drift_predicciones": predicciones,
     }
 

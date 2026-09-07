@@ -23,6 +23,8 @@ ESTADOS = {
     "SEVERO": ("critical", "Severo"),
     "MODERADO": ("warning", "Moderado"),
     "estable": ("good", "Estable"),
+    # Se movio, pero por una razon que ya conocemos: no es senal de nada.
+    "estructural": ("neutro", "Estructural"),
 }
 
 
@@ -78,6 +80,17 @@ def construir(reporte: dict) -> str:
     estado_txt = "Requiere revisión" if reporte["requiere_atencion"] else "Sin alarmas"
 
     filas = "".join(barra_psi(f, maximo) for f in drift)
+
+    monotonas = [f["variable"] for f in drift if f["estado"] == "estructural"]
+    nota_estructural = ""
+    if monotonas:
+        nombres = ", ".join(f"<code>{v}</code>" for v in monotonas)
+        nota_estructural = (
+            f'<p class="nota" style="margin:14px 0 0">{nombres} queda fuera del conteo: '
+            "es un contador acumulado, así que se aparta del entrenamiento por el paso del "
+            "tiempo y no porque algo haya fallado. Su PSI se sigue calculando —una caída "
+            "repentina sí significaría algo— pero no dispara la alarma, porque una alarma "
+            "que suena siempre deja de mirarse.</p>")
     metricas = "".join(metrica(n, perf[k]) for n, k in
                        [("Precisión", "precision"), ("Recall", "recall"),
                         ("F1", "f1"), ("AUC-PR", "auc_pr")]) if perf else ""
@@ -160,6 +173,7 @@ header {{ display:flex; justify-content:space-between; align-items:flex-start; g
 .c-critical {{ background:var(--wash-critical); color:var(--critical); }}
 .c-warning {{ background:rgba(250,178,25,.16); color:#8a6100; }}
 .c-good {{ background:var(--wash-good); color:var(--good); }}
+.c-neutro {{ background:var(--line); color:var(--ink-soft); }}
 :root[data-theme="dark"] .c-warning, :root:not([data-theme="light"]) .c-warning {{ color:var(--warning); }}
 
 .duo {{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }}
@@ -171,6 +185,7 @@ header {{ display:flex; justify-content:space-between; align-items:flex-start; g
            font-variant-numeric:tabular-nums; }}
 .nota {{ color:var(--ink-soft); font-size:13px; line-height:1.65; }}
 .nota strong {{ color:var(--ink); font-weight:600; }}
+.nota code {{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink); }}
 .leyenda {{ display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--ink-mute);
            margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }}
 .leyenda span {{ display:flex; align-items:center; gap:6px; }}
@@ -212,10 +227,12 @@ footer {{ color:var(--ink-mute); font-size:12px; text-align:center; }}
   <div class="tarjeta">
     <h2>Estabilidad de las variables de entrada · PSI</h2>
     {filas}
+    {nota_estructural}
     <div class="leyenda">
       <span><i class="pip t-good"></i>Estable · PSI &lt; 0,10</span>
       <span><i class="pip t-warning"></i>Moderado · 0,10 – 0,25</span>
       <span><i class="pip t-critical"></i>Severo · PSI ≥ 0,25</span>
+      <span><i class="pip t-neutro"></i>Estructural · se mueve por calendario</span>
       <span>{con_drift} de {len(drift)} variables con desplazamiento detectable</span>
     </div>
   </div>

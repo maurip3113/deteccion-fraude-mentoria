@@ -33,6 +33,13 @@ LIMITE_ZSCORE = 10.0
 
 COLS_ONEHOT = ["Cliente_Sexo", "Cliente_EstadoCivil", "Cliente_Segmento", "Presencia_Cliente"]
 
+# Variables que crecen solas con el calendario. `Cliente_Trx_Count` es un contador
+# acumulado: en diciembre cada cliente lleva un anio de operaciones encima, asi que
+# se aparta del entrenamiento por construccion y no porque algo haya fallado.
+# Medir su PSI contra una referencia congelada da una alarma que suena siempre, y
+# una alarma que suena siempre es una que nadie mira.
+VARIABLES_MONOTONAS = {"Cliente_Trx_Count"}
+
 VARIABLES_CRUDAS = [
     "Trx_Importe", "Es_Outlier_Importe", "Hora_Dia", "Es_Fin_de_Semana",
     "Tiempo_Entre_Trx_Horas", "Es_Moneda_Dolar", "Cliente_Edad",

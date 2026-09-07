@@ -76,6 +76,7 @@ header { display:flex; justify-content:space-between; align-items:flex-start; ga
 .c-critical { background:var(--wash-critical); color:var(--critical); }
 .c-warning { background:rgba(250,178,25,.16); color:#8a6100; }
 .c-good { background:var(--wash-good); color:var(--good); }
+.c-neutro { background:var(--line); color:var(--ink-soft); }
 :root[data-theme="dark"] .c-warning, :root:not([data-theme="light"]) .c-warning { color:var(--warning); }
 
 .duo { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
@@ -87,6 +88,7 @@ header { display:flex; justify-content:space-between; align-items:flex-start; ga
            font-variant-numeric:tabular-nums; }
 .nota { color:var(--ink-soft); font-size:13px; line-height:1.65; }
 .nota strong { color:var(--ink); font-weight:600; }
+.nota code { font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink); }
 .leyenda { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--ink-mute);
            margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
 .leyenda span { display:flex; align-items:center; gap:6px; }
@@ -157,10 +159,10 @@ footer { color:var(--ink-mute); font-size:12px; text-align:center; }
       <div class="fila">
         <div class="var">Cliente_Trx_Count</div>
         <div class="pista">
-          <div class="barra t-critical" style="width:100.00%"></div>
+          <div class="barra t-neutro" style="width:100.00%"></div>
         </div>
         <div class="psi">0.6721</div>
-        <div class="chip c-critical">Severo</div>
+        <div class="chip c-neutro">Estructural</div>
       </div>
       <div class="fila">
         <div class="var">Presencia_Cliente_Presencial</div>
@@ -338,11 +340,13 @@ footer { color:var(--ink-mute); font-size:12px; text-align:center; }
         <div class="psi">0.0000</div>
         <div class="chip c-good">Estable</div>
       </div>
+    <p class="nota" style="margin:14px 0 0"><code>Cliente_Trx_Count</code> queda fuera del conteo: es un contador acumulado, así que se aparta del entrenamiento por el paso del tiempo y no porque algo haya fallado. Su PSI se sigue calculando —una caída repentina sí significaría algo— pero no dispara la alarma, porque una alarma que suena siempre deja de mirarse.</p>
     <div class="leyenda">
       <span><i class="pip t-good"></i>Estable · PSI &lt; 0,10</span>
       <span><i class="pip t-warning"></i>Moderado · 0,10 – 0,25</span>
       <span><i class="pip t-critical"></i>Severo · PSI ≥ 0,25</span>
-      <span>1 de 23 variables con desplazamiento detectable</span>
+      <span><i class="pip t-neutro"></i>Estructural · se mueve por calendario</span>
+      <span>0 de 23 variables con desplazamiento detectable</span>
     </div>
   </div>
 
@@ -391,5 +395,5 @@ footer { color:var(--ink-mute); font-size:12px; text-align:center; }
   </div>
 
   <footer>Generado desde <span class="mono">artifacts/reporte_monitoreo.json</span> ·
-  2026-09-07 15:22</footer>
+  2026-09-07 15:29</footer>
 </div>
