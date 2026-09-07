@@ -100,7 +100,8 @@ jobs:
               "cliente_estado_civil": "SOLTERO/A",
               "cliente_segmento": "S3"
             }' | tee /dev/stderr \
-            | jq -e '.probabilidad_fraude >= 0 and .probabilidad_fraude <= 1'
+            | jq -e '.probabilidad_fraude >= 0 and .probabilidad_fraude <= 1
+                     and (.explicacion | length) > 0'
 
       - name: Avisar si el contenedor corre con otras versiones que el modelo
         run: |

@@ -113,6 +113,20 @@ El rol de ejecución necesita `AmazonSageMakerFullAccess` y permiso de lectura s
 
 **Alertar no es bloquear.** La respuesta de `/predict` incluye una acción (`revision_humana` / `aprobar`), no un bloqueo. Con una precisión del 66%, bloquear automáticamente significa frenar una transacción legítima de cada tres alertas.
 
+**Y la alerta viene con su motivo.** Si el modelo manda una transacción a revisión humana pero no dice por qué, le deja al analista el trabajo entero. Cada respuesta incluye las variables que más pesaron, con su valor y hacia dónde empujaron:
+
+```json
+"explicacion": [
+  {"variable": "horas desde la transaccion anterior", "valor": 19.22, "contribucion": -1.65, "empuja": "hacia legitima"},
+  {"variable": "hora del dia",                        "valor": 3.0,   "contribucion": +0.66, "empuja": "hacia fraude"},
+  {"variable": "transaccion presencial",              "valor": 0.0,   "contribucion": +0.64, "empuja": "hacia fraude"}
+]
+```
+
+Son valores SHAP calculados con el TreeSHAP **que ya trae XGBoost** (`pred_contribs=True`), no con el paquete `shap`: es el mismo algoritmo y el mismo resultado exacto, pero no le suma al contenedor una dependencia pesada para calcular algo que el modelo sabe hacer solo. Cuesta ~2 ms por transacción. Son exactos, no aproximados — un test verifica que `base + contribuciones` reproduce la probabilidad del modelo, porque una explicación que no se corresponde con la decisión es peor que no explicar.
+
+Las contribuciones son aditivas en *log-odds*, no en probabilidad: no se leen como "aporta 12% de riesgo" sino como cuánto empuja cada variable en la escala en que el modelo decide.
+
 **El artefacto declara con qué versiones se entrenó.** `joblib` guarda referencias a las clases de la librería que creó el modelo: cargar en el contenedor un `.joblib` serializado con otra versión de scikit-learn o xgboost falla, o —peor— funciona devolviendo predicciones sutilmente distintas a las que se validaron. Cada modelo guarda su `entorno` y la API lo compara al arrancar. `requirements.txt` está fijado a esas versiones exactas, y al reentrenar con librerías nuevas hay que actualizarlo en el mismo commit.
 
 **Reemplazar el modelo exige ganar por un margen.** `retrain.py` promueve el challenger sólo si mejora el F1 en más de 0,01. Cambiar el modelo tiene un costo operativo — revalidación, aviso al equipo de fraude, recalibración de umbrales — que una diferencia del tamaño del ruido no justifica.
@@ -141,11 +155,30 @@ El análisis completo, con gráficos y sobre el Random Forest, está en la secci
 
 La conclusión operativa no es "reentrenar más seguido". Es que el umbral no puede ser una constante estimada una vez: tiene que re-derivarse periódicamente, y en un caso como diciembre — donde `monitoring.py` detecta que el volumen de alertas se multiplica por 24,65 — la restricción real que manda no es el F1 histórico sino cuántos casos por día puede revisar el equipo de fraude.
 
+**Lo que apareció al auditar el modelo con SHAP.** La misma herramienta que explica una alerta sirve para revisar en qué se apoya el modelo en general (`importancia_global` en [`explain.py`](fraude/explain.py)):
+
+| Variable | Peso |
+|---|---|
+| `Rubro_Categoria_TasaFraude` | 36,9 % |
+| `Presencia_Cliente_Presencial` | 10,5 % |
+| `Trx_Importe` | 8,7 % |
+| `Cliente_Trx_Count` | 8,5 % |
+
+Que una sola variable concentre el 37% pedía explicación, sobre todo siendo un *target encoding*. Resultó no ser fuga —el encoding se ajusta sólo con entrenamiento— sino algo más simple: **la categoría `SIN RUBRO / NO APLICA` son 103.499 transacciones, el 54% del dataset, y no tiene ni un solo fraude.** Son movimientos que no son compras con tarjeta, así que la variable está separando sobre todo "esto es una compra en un comercio" de "esto es otra cosa".
+
+Eso tiene dos consecuencias concretas:
+
+- **La tasa de fraude relevante es 1,34%, no 0,62%** — la del subconjunto donde el fraude es posible. Es el número que importa para dimensionar la revisión.
+- **Infla `accuracy` y `AUC-ROC`, no F1 ni AUC-PR.** Restringiendo la evaluación a transacciones donde el fraude puede ocurrir, el AUC-ROC baja de 0,964 a **0,927**, mientras que F1 (0,601) y AUC-PR (0,620) no se mueven — porque no dependen de los verdaderos negativos que se quitaron. Es una confirmación de que estaba bien elegido liderar con F1 y AUC-PR.
+
+**Y un defecto real que hay que corregir:** el target encoding no está suavizado. `Hoteles y Alojamiento` recibe el valor de riesgo más alto de todo el mapa (0,143) estimado con **11 transacciones y 2 fraudes**; tres categorías tienen menos de 100 transacciones. Ese valor es ruido tratado como la señal de comercio más fuerte que tiene el modelo. La corrección estándar es suavizar hacia la tasa global en función del tamaño de cada categoría.
+
 ## Lo que falta para que esto sea producción de verdad
 
 Vale la pena ser explícito sobre el límite de este ejercicio:
 
 - **El estado de clientes vive en memoria del proceso.** Se reinicia con el servicio y no se comparte entre réplicas — por eso `/invocations` lo usa de sólo lectura. Es el pendiente más importante: en producción va a DynamoDB, Redis o un feature store gestionado, y recién ahí el endpoint puede incorporar la transacción que acaba de puntuar al historial del cliente.
+- **El target encoding de rubro no está suavizado** (ver arriba): una categoría con 11 transacciones recibe el valor de riesgo más alto del mapa. Es el defecto más concreto pendiente.
 - **No hay autenticación, rate limiting ni trazas distribuidas.** En SageMaker la autenticación la resuelve IAM, pero un consumidor externo necesitaría API Gateway adelante.
 - **El despliegue está escrito y verificado, pero nunca ejecutado contra AWS.** `aws/deploy.py` crea el endpoint y `aws/invoke.py` lo prueba; el contenedor cumple el contrato de SageMaker y el CI lo comprueba en cada push, pero nadie corrió todavía el `docker push` a ECR ni pagó por un endpoint.
 - **El reentrenamiento se dispara a mano.** Automatizarlo es un scheduler (EventBridge → SageMaker Pipeline o Step Functions), no un cambio de lógica.
@@ -160,6 +193,7 @@ produccion/
 │   ├── features.py     # ingeniería de variables compartida + estado por cliente
 │   ├── train.py        # entrenamiento, validación y serialización versionada
 │   ├── api.py          # servicio FastAPI de scoring
+│   ├── explain.py      # SHAP por transaccion y auditoria global
 │   ├── monitoring.py   # PSI, KS y performance con etiquetas reales
 │   └── retrain.py      # champion/challenger con partición temporal
 ├── aws/

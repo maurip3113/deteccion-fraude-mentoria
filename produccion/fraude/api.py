@@ -25,6 +25,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from fraude.explain import explicar as explicar_prediccion
 from fraude.features import MAPA_PRESENCIA, MONEDA_DOLAR
 
 DIR_ARTEFACTOS = Path(__file__).resolve().parent.parent / "artifacts"
@@ -65,6 +66,13 @@ class Transaccion(BaseModel):
     }
 
 
+class Contribucion(BaseModel):
+    variable: str
+    valor: float
+    contribucion: float
+    empuja: str
+
+
 class Prediccion(BaseModel):
     cliente_id: int
     probabilidad_fraude: float
@@ -74,6 +82,9 @@ class Prediccion(BaseModel):
     modelo_version: int
     cliente_conocido: bool
     latencia_ms: float
+    # Por que el modelo decidio esto. Mandar una alerta a revision humana sin
+    # decir que mirar le deja al analista todo el trabajo.
+    explicacion: list[Contribucion] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +179,7 @@ def construir_fila(trx: Transaccion) -> tuple[pd.DataFrame, bool]:
 
 
 @app.post("/predict", response_model=Prediccion, summary="Score de una transaccion")
-def predict(trx: Transaccion, actualizar_estado: bool = True) -> Prediccion:
+def predict(trx: Transaccion, actualizar_estado: bool = True, explicar: bool = True) -> Prediccion:
     inicio = time.perf_counter()
     try:
         X, conocido = construir_fila(trx)
@@ -210,6 +221,7 @@ def predict(trx: Transaccion, actualizar_estado: bool = True) -> Prediccion:
         cliente_id=trx.cliente_id,
         probabilidad_fraude=round(proba, 6),
         alerta=alerta,
+        explicacion=[Contribucion(**c) for c in explicar_prediccion(BUNDLE["modelo"], X)] if explicar else None,
         # El TP3 y el notebook de mejoras concluyen lo mismo: con esta precision,
         # bloquear automaticamente genera mas dano que el fraude que evita.
         accion="revision_humana" if alerta else "aprobar",
@@ -235,7 +247,8 @@ def ping() -> dict:
 
 
 @app.post("/invocations", summary="Inferencia en el formato que espera SageMaker")
-def invocations(payload: Transaccion | list[Transaccion]) -> Prediccion | list[Prediccion]:
+def invocations(payload: Transaccion | list[Transaccion],
+                explicar: bool = True) -> Prediccion | list[Prediccion]:
     """Acepta una transaccion o un lote.
 
     A diferencia de `/predict`, no actualiza el estado del cliente. El endpoint
@@ -245,8 +258,8 @@ def invocations(payload: Transaccion | list[Transaccion]) -> Prediccion | list[P
     entrenar; moverlo a un feature store es el paso pendiente documentado.
     """
     if isinstance(payload, list):
-        return [predict(trx, actualizar_estado=False) for trx in payload]
-    return predict(payload, actualizar_estado=False)
+        return [predict(trx, actualizar_estado=False, explicar=explicar) for trx in payload]
+    return predict(payload, actualizar_estado=False, explicar=explicar)
 
 
 @app.get("/health", summary="Estado del servicio")

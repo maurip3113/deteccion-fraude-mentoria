@@ -14,7 +14,7 @@ import pytest
 import sklearn
 from fastapi.testclient import TestClient
 
-from fraude.api import app, verificar_entorno
+from fraude.api import Transaccion, app, verificar_entorno
 from fraude.features import EstadoClientes
 
 cliente = TestClient(app)
@@ -140,6 +140,40 @@ def test_invocations_no_modifica_el_estado_del_cliente():
     respuestas = cliente.post("/invocations", json=[TRX_BASE, TRX_BASE, TRX_BASE]).json()
     probabilidades = {r["probabilidad_fraude"] for r in respuestas}
     assert len(probabilidades) == 1
+
+
+def test_la_prediccion_viene_explicada():
+    """Una alerta sin razones le deja al analista todo el trabajo."""
+    cuerpo = cliente.post("/predict", json=TRX_BASE,
+                          params={"actualizar_estado": False}).json()
+    explicacion = cuerpo["explicacion"]
+    assert 1 <= len(explicacion) <= 5
+    assert all(e["empuja"] in ("hacia fraude", "hacia legitima") for e in explicacion)
+    # Ordenadas por peso, para que lo primero que se lee sea lo que mas pesó.
+    pesos = [abs(e["contribucion"]) for e in explicacion]
+    assert pesos == sorted(pesos, reverse=True)
+
+    sin = cliente.post("/predict", json=TRX_BASE,
+                       params={"actualizar_estado": False, "explicar": False}).json()
+    assert sin["explicacion"] is None
+
+
+def test_las_contribuciones_suman_la_prediccion():
+    """SHAP es exacto: base + contribuciones reproduce el margen del modelo.
+
+    Si esto se rompe, la explicación dejó de corresponderse con la decisión y
+    estaríamos mostrándole al analista un motivo que no es el real.
+    """
+    from fraude.api import BUNDLE, construir_fila
+    from fraude.explain import contribuciones
+
+    X, _ = construir_fila(Transaccion(**TRX_BASE))
+    contribs, base = contribuciones(BUNDLE["modelo"], X)
+
+    margen = base + contribs[0].sum()
+    proba_shap = 1 / (1 + np.exp(-margen))
+    proba_modelo = BUNDLE["modelo"].predict_proba(X)[0, 1]
+    assert proba_shap == pytest.approx(proba_modelo, abs=1e-5)
 
 
 def test_metrics_cuenta_las_predicciones():
