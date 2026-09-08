@@ -198,7 +198,13 @@ Todo lo anterior monitorea. Pero **¿cómo se sabe si el monitoreo sirve?** Con 
 python -m simulacion.generador     # dos años sintéticos con los escenarios aplicados
 python -m simulacion.orquestador   # el lazo mes a mes, y la verificación final
 python -m simulacion.reproductor --periodo 2026-12 --n 800   # replay contra la API
+python -m simulacion.tablero        # el tablero temporal a partir de la línea de tiempo
 ```
+
+El tablero de la simulación es distinto del de monitoreo: aquel muestra una foto, éste la
+película. Y sobre todo **superpone lo declarado con lo detectado** sobre el mismo eje, así
+que se puede trazar una vertical desde un escenario inyectado hasta la métrica que lo delató
+— o ver que no lo delató ninguna.
 
 ### El resultado
 
@@ -253,7 +259,8 @@ produccion/
 │   ├── escenarios.py   # la verdad declarada: qué cambia y cuándo
 │   ├── generador.py    # años sintéticos por desplazamiento del histórico real
 │   ├── reproductor.py  # replay en streaming contra la API
-│   └── orquestador.py  # el lazo completo + verificación
+│   ├── orquestador.py  # el lazo completo + verificación
+│   └── tablero.py      # tablero temporal de la simulación
 ├── artifacts/          # modelos versionados, metadata y logs
 ├── tests/
 ├── Dockerfile

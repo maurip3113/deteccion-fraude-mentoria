@@ -1,0 +1,166 @@
+<title>Simulación del Monitoreo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f7f8fa; --surface:#ffffff; --ink:#0d1117; --ink-2:#55606e; --ink-3:#8a94a1;
+  --line:#e3e7ec; --line-2:#cbd2db;
+  --s1:#2a78d6; --s2:#eb6834; --good:#0ca30c; --critical:#d03b3b; --warning:#fab219;
+  --banda:rgba(42,120,214,.055); --wash-ok:rgba(12,163,12,.10); --wash-mal:rgba(208,59,59,.10);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#101317; --surface:#191d23; --ink:#e8eaed; --ink-2:#9aa4b2; --ink-3:#6c7684;
+    --line:#262c34; --line-2:#39414b;
+    --s1:#3987e5; --s2:#d95926;
+    --banda:rgba(57,135,229,.10); --wash-ok:rgba(12,163,12,.16); --wash-mal:rgba(208,59,59,.16);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101317; --surface:#191d23; --ink:#e8eaed; --ink-2:#9aa4b2; --ink-3:#6c7684;
+  --line:#262c34; --line-2:#39414b;
+  --s1:#3987e5; --s2:#d95926;
+  --banda:rgba(57,135,229,.10); --wash-ok:rgba(12,163,12,.16); --wash-mal:rgba(208,59,59,.16);
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);margin:0;
+  font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.6;
+  padding:34px 22px 56px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:27px;font-weight:600;margin:0;letter-spacing:-.015em}
+.meta{color:var(--ink-2);font-size:13.5px;margin-top:7px;max-width:70ch}
+h2{font-size:12.5px;font-weight:600;margin:0 0 14px;text-transform:uppercase;
+   letter-spacing:.09em;color:var(--ink-3)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 24px}
+p{margin:0 0 11px;max-width:72ch}p:last-child{margin-bottom:0}
+strong{font-weight:600}
+.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+
+.tiras{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.tira{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.tira .v{font-size:30px;font-weight:600;letter-spacing:-.02em;
+  font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.tira .e{color:var(--ink-3);font-size:12.5px;margin-top:3px}
+.v.ok{color:var(--good)}.v.al{color:var(--critical)}
+
+figure{margin:0 0 26px}figure:last-child{margin-bottom:0}
+figure svg{display:block;width:100%;height:auto}
+.tit-g{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.leyenda-g{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin-bottom:6px}
+.leyenda-g span{display:flex;align-items:center;gap:6px}
+.pip{width:18px;height:3px;border-radius:2px;display:inline-block}
+.pip.c1{background:var(--s1)}.pip.c2{background:var(--s2)}
+
+.grilla{stroke:var(--line);stroke-width:1}
+.eje{stroke:var(--line-2);stroke-width:1}
+.umbral{stroke:var(--warning);stroke-width:1.2;stroke-dasharray:4 3}
+.umbral-t{fill:var(--ink-3);font-family:"IBM Plex Mono",monospace;font-size:9.5px}
+.tick{fill:var(--ink-3);font-family:"IBM Plex Sans",sans-serif;font-size:10px}
+.tick-f{fill:var(--ink-2);font-family:"IBM Plex Sans",sans-serif;font-size:11px;font-weight:500}
+.anio{fill:var(--ink-2);font-family:"IBM Plex Sans",sans-serif;font-size:10.5px;font-weight:600}
+.ver{fill:var(--ink-3);font-family:"IBM Plex Mono",monospace;font-size:9.5px}
+.banda{fill:var(--banda)}
+.esc{fill:var(--s1);opacity:.75}
+.alarma{fill:var(--critical)}
+.promo{stroke:var(--good);stroke-width:2}
+.linea{fill:none;stroke-width:2}
+.punto{stroke:var(--surface);stroke-width:1.5}
+.c1.linea{stroke:var(--s1)}.c1.punto{fill:var(--s1)}
+.c2.linea{stroke:var(--s2)}.c2.punto{fill:var(--s2)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+   color:var(--ink-3);font-weight:600;padding:0 10px 9px 0;border-bottom:1px solid var(--line-2)}
+td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.chip{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:5px}
+.chip.ok{background:var(--wash-ok);color:var(--good)}
+.chip.mal{background:var(--wash-mal);color:var(--critical)}
+footer{color:var(--ink-3);font-size:12px;text-align:center}
+@media(max-width:640px){body{padding:22px 12px 40px}h1{font-size:22px}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Simulación del monitoreo</h1>
+    <p class="meta">Dos años sintéticos con cambios <strong>declarados de antemano</strong>.
+    Como se sabe qué se inyectó y cuándo, se puede medir si el monitoreo lo encontró — y,
+    lo que casi nunca se prueba, si se calla cuando no pasa nada.</p>
+  </header>
+
+  <div class="tiras">
+    <div class="tira"><div class="v ok">4/4</div>
+      <div class="e">escenarios detectados</div></div>
+    <div class="tira"><div class="v ok">0</div>
+      <div class="e">falsos positivos en 14 meses tranquilos</div></div>
+    <div class="tira"><div class="v">3</div>
+      <div class="e">modelos promovidos</div></div>
+    <div class="tira"><div class="v">2</div>
+      <div class="e">meses de retraso de las etiquetas</div></div>
+  </div>
+
+  <section>
+    <h2>Declarado contra detectado</h2>
+    
+  <figure>
+    <figcaption class="tit-g">Lo declarado, y lo que el monitoreo encontró</figcaption>
+    <svg viewBox="0 0 940 186" role="img" aria-label="Escenarios inyectados y meses en que el monitoreo levanto alarma, sobre el mismo eje temporal."><text x="110" y="22" class="tick" text-anchor="end">Temporada alta '26</text><rect x="488.5" y="10" width="33.5" height="16" rx="3" class="esc"/><text x="110" y="46" class="tick" text-anchor="end">Migración e-commerce</text><rect x="622.5" y="34" width="301.5" height="16" rx="3" class="esc"/><text x="110" y="70" class="tick" text-anchor="end">Campaña presencial</text><rect x="756.5" y="58" width="67.0" height="16" rx="3" class="esc"/><text x="110" y="94" class="tick" text-anchor="end">Temporada alta '27</text><rect x="890.5" y="82" width="33.5" height="16" rx="3" class="esc"/><text x="110" y="126" class="tick-f" text-anchor="end">Alarma</text><rect x="491.5" y="114" width="27.5" height="16" rx="3" class="alarma"/><rect x="759.5" y="114" width="27.5" height="16" rx="3" class="alarma"/><rect x="860.0" y="114" width="27.5" height="16" rx="3" class="alarma"/><rect x="893.5" y="114" width="27.5" height="16" rx="3" class="alarma"/><text x="110" y="151" class="tick-f" text-anchor="end">Modelo</text><text x="136.8" y="151" class="ver" text-anchor="middle">v1</text><text x="170.2" y="151" class="ver" text-anchor="middle">v1</text><text x="203.8" y="151" class="ver" text-anchor="middle">v1</text><text x="237.2" y="151" class="ver" text-anchor="middle">v1</text><text x="270.8" y="151" class="ver" text-anchor="middle">v1</text><text x="304.2" y="151" class="ver" text-anchor="middle">v1</text><text x="337.8" y="151" class="ver" text-anchor="middle">v1</text><text x="371.2" y="151" class="ver" text-anchor="middle">v1</text><text x="404.8" y="151" class="ver" text-anchor="middle">v1</text><text x="438.2" y="151" class="ver" text-anchor="middle">v1</text><text x="471.8" y="151" class="ver" text-anchor="middle">v1</text><text x="505.2" y="151" class="ver" text-anchor="middle">v1</text><line x1="488.5" y1="136" x2="488.5" y2="155" class="promo"/><text x="538.8" y="151" class="ver" text-anchor="middle">v2</text><text x="572.2" y="151" class="ver" text-anchor="middle">v2</text><text x="605.8" y="151" class="ver" text-anchor="middle">v2</text><text x="639.2" y="151" class="ver" text-anchor="middle">v2</text><text x="672.8" y="151" class="ver" text-anchor="middle">v2</text><text x="706.2" y="151" class="ver" text-anchor="middle">v2</text><text x="739.8" y="151" class="ver" text-anchor="middle">v2</text><text x="773.2" y="151" class="ver" text-anchor="middle">v2</text><line x1="756.5" y1="136" x2="756.5" y2="155" class="promo"/><text x="806.8" y="151" class="ver" text-anchor="middle">v3</text><text x="840.2" y="151" class="ver" text-anchor="middle">v3</text><text x="873.8" y="151" class="ver" text-anchor="middle">v3</text><line x1="857.0" y1="136" x2="857.0" y2="155" class="promo"/><text x="907.2" y="151" class="ver" text-anchor="middle">v4</text><line x1="120" y1="164" x2="924" y2="164" class="eje"/><text x="136.8" y="178" class="tick" text-anchor="middle">01</text><text x="136.8" y="192" class="anio" text-anchor="middle">2026</text><text x="170.2" y="178" class="tick" text-anchor="middle">02</text><text x="203.8" y="178" class="tick" text-anchor="middle">03</text><text x="237.2" y="178" class="tick" text-anchor="middle">04</text><text x="270.8" y="178" class="tick" text-anchor="middle">05</text><text x="304.2" y="178" class="tick" text-anchor="middle">06</text><text x="337.8" y="178" class="tick" text-anchor="middle">07</text><text x="371.2" y="178" class="tick" text-anchor="middle">08</text><text x="404.8" y="178" class="tick" text-anchor="middle">09</text><text x="438.2" y="178" class="tick" text-anchor="middle">10</text><text x="471.8" y="178" class="tick" text-anchor="middle">11</text><text x="505.2" y="178" class="tick" text-anchor="middle">12</text><text x="538.8" y="178" class="tick" text-anchor="middle">01</text><text x="538.8" y="192" class="anio" text-anchor="middle">2027</text><text x="572.2" y="178" class="tick" text-anchor="middle">02</text><text x="605.8" y="178" class="tick" text-anchor="middle">03</text><text x="639.2" y="178" class="tick" text-anchor="middle">04</text><text x="672.8" y="178" class="tick" text-anchor="middle">05</text><text x="706.2" y="178" class="tick" text-anchor="middle">06</text><text x="739.8" y="178" class="tick" text-anchor="middle">07</text><text x="773.2" y="178" class="tick" text-anchor="middle">08</text><text x="806.8" y="178" class="tick" text-anchor="middle">09</text><text x="840.2" y="178" class="tick" text-anchor="middle">10</text><text x="873.8" y="178" class="tick" text-anchor="middle">11</text><text x="907.2" y="178" class="tick" text-anchor="middle">12</text></svg>
+  </figure>
+    <p style="color:var(--ink-2);font-size:13.5px">Las barras de arriba son los escenarios
+    que se inyectaron; los bloques rojos, los meses en que el monitoreo pidió intervención.
+    Las marcas verdes señalan dónde se promovió un modelo nuevo.</p>
+  </section>
+
+  <section>
+    <h2>Qué vio el monitoreo</h2>
+    
+  <figure>
+    <figcaption class="tit-g">Tasa de alertas y tasa de fraude real (% de transacciones)</figcaption>
+    <div class="leyenda-g"><span><i class="pip c1"></i>Alertas del modelo</span><span><i class="pip c2"></i>Fraude real (no observable en el momento)</span></div>
+    <svg viewBox="0 0 940 186" role="img" aria-label="Tasa de alertas y tasa de fraude real (% de transacciones)"><rect x="488.5" y="0" width="33.5" height="146" class="banda"/><rect x="622.5" y="0" width="301.5" height="146" class="banda"/><rect x="756.5" y="0" width="67.0" height="146" class="banda"/><rect x="890.5" y="0" width="33.5" height="146" class="banda"/><line x1="120" y1="146.0" x2="924" y2="146.0" class="grilla"/><text x="110" y="150.0" class="tick" text-anchor="end">0%</text><line x1="120" y1="113.0" x2="924" y2="113.0" class="grilla"/><text x="110" y="117.0" class="tick" text-anchor="end">2%</text><line x1="120" y1="80.0" x2="924" y2="80.0" class="grilla"/><text x="110" y="84.0" class="tick" text-anchor="end">3%</text><line x1="120" y1="47.0" x2="924" y2="47.0" class="grilla"/><text x="110" y="51.0" class="tick" text-anchor="end">4%</text><line x1="120" y1="14.0" x2="924" y2="14.0" class="grilla"/><text x="110" y="18.0" class="tick" text-anchor="end">6%</text><polyline points="136.8,141.0 170.2,141.5 203.8,141.5 237.2,140.1 270.8,142.3 304.2,143.1 337.8,143.2 371.2,142.1 404.8,140.7 438.2,139.4 471.8,124.1 505.2,70.6 538.8,131.8 572.2,131.3 605.8,129.4 639.2,119.9 672.8,124.7 706.2,127.2 739.8,126.8 773.2,124.7 806.8,120.2 840.2,119.4 873.8,115.6 907.2,22.7" class="linea c1"/><circle cx="136.8" cy="141.0" r="3.0" class="punto c1"/><circle cx="170.2" cy="141.5" r="3.0" class="punto c1"/><circle cx="203.8" cy="141.5" r="3.0" class="punto c1"/><circle cx="237.2" cy="140.1" r="3.0" class="punto c1"/><circle cx="270.8" cy="142.3" r="3.0" class="punto c1"/><circle cx="304.2" cy="143.1" r="3.0" class="punto c1"/><circle cx="337.8" cy="143.2" r="3.0" class="punto c1"/><circle cx="371.2" cy="142.1" r="3.0" class="punto c1"/><circle cx="404.8" cy="140.7" r="3.0" class="punto c1"/><circle cx="438.2" cy="139.4" r="3.0" class="punto c1"/><circle cx="471.8" cy="124.1" r="3.0" class="punto c1"/><circle cx="505.2" cy="70.6" r="3.0" class="punto c1"/><circle cx="538.8" cy="131.8" r="3.0" class="punto c1"/><circle cx="572.2" cy="131.3" r="3.0" class="punto c1"/><circle cx="605.8" cy="129.4" r="3.0" class="punto c1"/><circle cx="639.2" cy="119.9" r="3.0" class="punto c1"/><circle cx="672.8" cy="124.7" r="3.0" class="punto c1"/><circle cx="706.2" cy="127.2" r="3.0" class="punto c1"/><circle cx="739.8" cy="126.8" r="3.0" class="punto c1"/><circle cx="773.2" cy="124.7" r="3.0" class="punto c1"/><circle cx="806.8" cy="120.2" r="3.0" class="punto c1"/><circle cx="840.2" cy="119.4" r="3.0" class="punto c1"/><circle cx="873.8" cy="115.6" r="3.0" class="punto c1"/><circle cx="907.2" cy="22.7" r="3.0" class="punto c1"/><polyline points="136.8,134.0 170.2,134.1 203.8,134.1 237.2,130.5 270.8,133.0 304.2,132.2 337.8,131.4 371.2,132.9 404.8,132.1 438.2,132.6 471.8,133.5 505.2,69.5 538.8,134.7 572.2,135.4 605.8,133.3 639.2,132.7 672.8,132.2 706.2,132.2 739.8,130.8 773.2,124.1 806.8,119.7 840.2,129.8 873.8,133.4 907.2,47.0" class="linea c2"/><circle cx="136.8" cy="134.0" r="3.0" class="punto c2"/><circle cx="170.2" cy="134.1" r="3.0" class="punto c2"/><circle cx="203.8" cy="134.1" r="3.0" class="punto c2"/><circle cx="237.2" cy="130.5" r="3.0" class="punto c2"/><circle cx="270.8" cy="133.0" r="3.0" class="punto c2"/><circle cx="304.2" cy="132.2" r="3.0" class="punto c2"/><circle cx="337.8" cy="131.4" r="3.0" class="punto c2"/><circle cx="371.2" cy="132.9" r="3.0" class="punto c2"/><circle cx="404.8" cy="132.1" r="3.0" class="punto c2"/><circle cx="438.2" cy="132.6" r="3.0" class="punto c2"/><circle cx="471.8" cy="133.5" r="3.0" class="punto c2"/><circle cx="505.2" cy="69.5" r="3.0" class="punto c2"/><circle cx="538.8" cy="134.7" r="3.0" class="punto c2"/><circle cx="572.2" cy="135.4" r="3.0" class="punto c2"/><circle cx="605.8" cy="133.3" r="3.0" class="punto c2"/><circle cx="639.2" cy="132.7" r="3.0" class="punto c2"/><circle cx="672.8" cy="132.2" r="3.0" class="punto c2"/><circle cx="706.2" cy="132.2" r="3.0" class="punto c2"/><circle cx="739.8" cy="130.8" r="3.0" class="punto c2"/><circle cx="773.2" cy="124.1" r="3.0" class="punto c2"/><circle cx="806.8" cy="119.7" r="3.0" class="punto c2"/><circle cx="840.2" cy="129.8" r="3.0" class="punto c2"/><circle cx="873.8" cy="133.4" r="3.0" class="punto c2"/><circle cx="907.2" cy="47.0" r="3.0" class="punto c2"/><line x1="120" y1="154" x2="924" y2="154" class="eje"/><text x="136.8" y="168" class="tick" text-anchor="middle">01</text><text x="136.8" y="182" class="anio" text-anchor="middle">2026</text><text x="170.2" y="168" class="tick" text-anchor="middle">02</text><text x="203.8" y="168" class="tick" text-anchor="middle">03</text><text x="237.2" y="168" class="tick" text-anchor="middle">04</text><text x="270.8" y="168" class="tick" text-anchor="middle">05</text><text x="304.2" y="168" class="tick" text-anchor="middle">06</text><text x="337.8" y="168" class="tick" text-anchor="middle">07</text><text x="371.2" y="168" class="tick" text-anchor="middle">08</text><text x="404.8" y="168" class="tick" text-anchor="middle">09</text><text x="438.2" y="168" class="tick" text-anchor="middle">10</text><text x="471.8" y="168" class="tick" text-anchor="middle">11</text><text x="505.2" y="168" class="tick" text-anchor="middle">12</text><text x="538.8" y="168" class="tick" text-anchor="middle">01</text><text x="538.8" y="182" class="anio" text-anchor="middle">2027</text><text x="572.2" y="168" class="tick" text-anchor="middle">02</text><text x="605.8" y="168" class="tick" text-anchor="middle">03</text><text x="639.2" y="168" class="tick" text-anchor="middle">04</text><text x="672.8" y="168" class="tick" text-anchor="middle">05</text><text x="706.2" y="168" class="tick" text-anchor="middle">06</text><text x="739.8" y="168" class="tick" text-anchor="middle">07</text><text x="773.2" y="168" class="tick" text-anchor="middle">08</text><text x="806.8" y="168" class="tick" text-anchor="middle">09</text><text x="840.2" y="168" class="tick" text-anchor="middle">10</text><text x="873.8" y="168" class="tick" text-anchor="middle">11</text><text x="907.2" y="168" class="tick" text-anchor="middle">12</text></svg>
+  </figure>
+    
+  <figure>
+    <figcaption class="tit-g">PSI máximo entre las variables de entrada</figcaption>
+    
+    <svg viewBox="0 0 940 186" role="img" aria-label="PSI máximo entre las variables de entrada"><rect x="488.5" y="0" width="33.5" height="146" class="banda"/><rect x="622.5" y="0" width="301.5" height="146" class="banda"/><rect x="756.5" y="0" width="67.0" height="146" class="banda"/><rect x="890.5" y="0" width="33.5" height="146" class="banda"/><line x1="120" y1="146.0" x2="924" y2="146.0" class="grilla"/><text x="110" y="150.0" class="tick" text-anchor="end">0.00</text><line x1="120" y1="113.0" x2="924" y2="113.0" class="grilla"/><text x="110" y="117.0" class="tick" text-anchor="end">0.12</text><line x1="120" y1="80.0" x2="924" y2="80.0" class="grilla"/><text x="110" y="84.0" class="tick" text-anchor="end">0.25</text><line x1="120" y1="47.0" x2="924" y2="47.0" class="grilla"/><text x="110" y="51.0" class="tick" text-anchor="end">0.38</text><line x1="120" y1="14.0" x2="924" y2="14.0" class="grilla"/><text x="110" y="18.0" class="tick" text-anchor="end">0.50</text><line x1="120" y1="119.6" x2="924" y2="119.6" class="umbral"/><text x="920" y="114.6" class="umbral-t" text-anchor="end">moderado 0,10</text><line x1="120" y1="80.0" x2="924" y2="80.0" class="umbral"/><text x="920" y="75.0" class="umbral-t" text-anchor="end">severo 0,25</text><polyline points="136.8,101.6 170.2,100.6 203.8,146.0 237.2,146.0 270.8,146.0 304.2,146.0 337.8,146.0 371.2,146.0 404.8,146.0 438.2,146.0 471.8,146.0 505.2,109.9 538.8,112.2 572.2,110.6 605.8,146.0 639.2,93.4 672.8,92.2 706.2,89.6 739.8,91.7 773.2,73.8 806.8,87.2 840.2,83.0 873.8,70.1 907.2,19.4" class="linea c1"/><circle cx="136.8" cy="101.6" r="3.0" class="punto c1"/><circle cx="170.2" cy="100.6" r="3.0" class="punto c1"/><circle cx="203.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="237.2" cy="146.0" r="3.0" class="punto c1"/><circle cx="270.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="304.2" cy="146.0" r="3.0" class="punto c1"/><circle cx="337.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="371.2" cy="146.0" r="3.0" class="punto c1"/><circle cx="404.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="438.2" cy="146.0" r="3.0" class="punto c1"/><circle cx="471.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="505.2" cy="109.9" r="3.0" class="punto c1"/><circle cx="538.8" cy="112.2" r="3.0" class="punto c1"/><circle cx="572.2" cy="110.6" r="3.0" class="punto c1"/><circle cx="605.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="639.2" cy="93.4" r="3.0" class="punto c1"/><circle cx="672.8" cy="92.2" r="3.0" class="punto c1"/><circle cx="706.2" cy="89.6" r="3.0" class="punto c1"/><circle cx="739.8" cy="91.7" r="3.0" class="punto c1"/><circle cx="773.2" cy="73.8" r="3.0" class="punto c1"/><circle cx="806.8" cy="87.2" r="3.0" class="punto c1"/><circle cx="840.2" cy="83.0" r="3.0" class="punto c1"/><circle cx="873.8" cy="70.1" r="3.0" class="punto c1"/><circle cx="907.2" cy="19.4" r="3.0" class="punto c1"/><line x1="120" y1="154" x2="924" y2="154" class="eje"/><text x="136.8" y="168" class="tick" text-anchor="middle">01</text><text x="136.8" y="182" class="anio" text-anchor="middle">2026</text><text x="170.2" y="168" class="tick" text-anchor="middle">02</text><text x="203.8" y="168" class="tick" text-anchor="middle">03</text><text x="237.2" y="168" class="tick" text-anchor="middle">04</text><text x="270.8" y="168" class="tick" text-anchor="middle">05</text><text x="304.2" y="168" class="tick" text-anchor="middle">06</text><text x="337.8" y="168" class="tick" text-anchor="middle">07</text><text x="371.2" y="168" class="tick" text-anchor="middle">08</text><text x="404.8" y="168" class="tick" text-anchor="middle">09</text><text x="438.2" y="168" class="tick" text-anchor="middle">10</text><text x="471.8" y="168" class="tick" text-anchor="middle">11</text><text x="505.2" y="168" class="tick" text-anchor="middle">12</text><text x="538.8" y="168" class="tick" text-anchor="middle">01</text><text x="538.8" y="182" class="anio" text-anchor="middle">2027</text><text x="572.2" y="168" class="tick" text-anchor="middle">02</text><text x="605.8" y="168" class="tick" text-anchor="middle">03</text><text x="639.2" y="168" class="tick" text-anchor="middle">04</text><text x="672.8" y="168" class="tick" text-anchor="middle">05</text><text x="706.2" y="168" class="tick" text-anchor="middle">06</text><text x="739.8" y="168" class="tick" text-anchor="middle">07</text><text x="773.2" y="168" class="tick" text-anchor="middle">08</text><text x="806.8" y="168" class="tick" text-anchor="middle">09</text><text x="840.2" y="168" class="tick" text-anchor="middle">10</text><text x="873.8" y="168" class="tick" text-anchor="middle">11</text><text x="907.2" y="168" class="tick" text-anchor="middle">12</text></svg>
+  </figure>
+    
+  <figure>
+    <figcaption class="tit-g">Recall: qué proporción del fraude atrapó el modelo</figcaption>
+    
+    <svg viewBox="0 0 940 186" role="img" aria-label="Recall: qué proporción del fraude atrapó el modelo"><rect x="488.5" y="0" width="33.5" height="146" class="banda"/><rect x="622.5" y="0" width="301.5" height="146" class="banda"/><rect x="756.5" y="0" width="67.0" height="146" class="banda"/><rect x="890.5" y="0" width="33.5" height="146" class="banda"/><line x1="120" y1="146.0" x2="924" y2="146.0" class="grilla"/><text x="110" y="150.0" class="tick" text-anchor="end">0.0</text><line x1="120" y1="113.0" x2="924" y2="113.0" class="grilla"/><text x="110" y="117.0" class="tick" text-anchor="end">0.2</text><line x1="120" y1="80.0" x2="924" y2="80.0" class="grilla"/><text x="110" y="84.0" class="tick" text-anchor="end">0.3</text><line x1="120" y1="47.0" x2="924" y2="47.0" class="grilla"/><text x="110" y="51.0" class="tick" text-anchor="end">0.5</text><line x1="120" y1="14.0" x2="924" y2="14.0" class="grilla"/><text x="110" y="18.0" class="tick" text-anchor="end">0.7</text><polyline points="136.8,124.8 170.2,138.8 203.8,128.7 237.2,131.9 270.8,139.9 304.2,146.0 337.8,140.9 371.2,142.3 404.8,142.4 438.2,138.7 471.8,123.4 505.2,102.7 538.8,61.9 572.2,62.5 605.8,52.7 639.2,34.5 672.8,41.2 706.2,51.7 739.8,65.6 773.2,125.0 806.8,94.4 840.2,63.2 873.8,146.0 907.2,146.0" class="linea c1"/><circle cx="136.8" cy="124.8" r="3.0" class="punto c1"/><circle cx="170.2" cy="138.8" r="3.0" class="punto c1"/><circle cx="203.8" cy="128.7" r="3.0" class="punto c1"/><circle cx="237.2" cy="131.9" r="3.0" class="punto c1"/><circle cx="270.8" cy="139.9" r="3.0" class="punto c1"/><circle cx="304.2" cy="146.0" r="3.0" class="punto c1"/><circle cx="337.8" cy="140.9" r="3.0" class="punto c1"/><circle cx="371.2" cy="142.3" r="3.0" class="punto c1"/><circle cx="404.8" cy="142.4" r="3.0" class="punto c1"/><circle cx="438.2" cy="138.7" r="3.0" class="punto c1"/><circle cx="471.8" cy="123.4" r="3.0" class="punto c1"/><circle cx="505.2" cy="102.7" r="3.0" class="punto c1"/><circle cx="538.8" cy="61.9" r="3.0" class="punto c1"/><circle cx="572.2" cy="62.5" r="3.0" class="punto c1"/><circle cx="605.8" cy="52.7" r="3.0" class="punto c1"/><circle cx="639.2" cy="34.5" r="3.0" class="punto c1"/><circle cx="672.8" cy="41.2" r="3.0" class="punto c1"/><circle cx="706.2" cy="51.7" r="3.0" class="punto c1"/><circle cx="739.8" cy="65.6" r="3.0" class="punto c1"/><circle cx="773.2" cy="125.0" r="3.0" class="punto c1"/><circle cx="806.8" cy="94.4" r="3.0" class="punto c1"/><circle cx="840.2" cy="63.2" r="3.0" class="punto c1"/><circle cx="873.8" cy="146.0" r="3.0" class="punto c1"/><circle cx="907.2" cy="146.0" r="3.0" class="punto c1"/><line x1="120" y1="154" x2="924" y2="154" class="eje"/><text x="136.8" y="168" class="tick" text-anchor="middle">01</text><text x="136.8" y="182" class="anio" text-anchor="middle">2026</text><text x="170.2" y="168" class="tick" text-anchor="middle">02</text><text x="203.8" y="168" class="tick" text-anchor="middle">03</text><text x="237.2" y="168" class="tick" text-anchor="middle">04</text><text x="270.8" y="168" class="tick" text-anchor="middle">05</text><text x="304.2" y="168" class="tick" text-anchor="middle">06</text><text x="337.8" y="168" class="tick" text-anchor="middle">07</text><text x="371.2" y="168" class="tick" text-anchor="middle">08</text><text x="404.8" y="168" class="tick" text-anchor="middle">09</text><text x="438.2" y="168" class="tick" text-anchor="middle">10</text><text x="471.8" y="168" class="tick" text-anchor="middle">11</text><text x="505.2" y="168" class="tick" text-anchor="middle">12</text><text x="538.8" y="168" class="tick" text-anchor="middle">01</text><text x="538.8" y="182" class="anio" text-anchor="middle">2027</text><text x="572.2" y="168" class="tick" text-anchor="middle">02</text><text x="605.8" y="168" class="tick" text-anchor="middle">03</text><text x="639.2" y="168" class="tick" text-anchor="middle">04</text><text x="672.8" y="168" class="tick" text-anchor="middle">05</text><text x="706.2" y="168" class="tick" text-anchor="middle">06</text><text x="739.8" y="168" class="tick" text-anchor="middle">07</text><text x="773.2" y="168" class="tick" text-anchor="middle">08</text><text x="806.8" y="168" class="tick" text-anchor="middle">09</text><text x="840.2" y="168" class="tick" text-anchor="middle">10</text><text x="873.8" y="168" class="tick" text-anchor="middle">11</text><text x="907.2" y="168" class="tick" text-anchor="middle">12</text></svg>
+  </figure>
+  </section>
+
+  <section>
+    <h2>Verificación</h2>
+    <table>
+      <tr><th>Escenario</th><th>Meses con alarma</th><th>Retraso</th><th>Resultado</th></tr>
+      <tr><td>Temporada alta '26</td>
+        <td class="n">1/1</td>
+        <td class="n">0 meses</td>
+        <td><span class="chip ok">
+        detectado</span></td></tr><tr><td>Migración e-commerce</td>
+        <td class="n">3/9</td>
+        <td class="n">4 meses</td>
+        <td><span class="chip ok">
+        detectado</span></td></tr><tr><td>Campaña presencial</td>
+        <td class="n">1/2</td>
+        <td class="n">0 meses</td>
+        <td><span class="chip ok">
+        detectado</span></td></tr><tr><td>Temporada alta '27</td>
+        <td class="n">1/1</td>
+        <td class="n">0 meses</td>
+        <td><span class="chip ok">
+        detectado</span></td></tr>
+    </table>
+    <p style="margin-top:16px;color:var(--ink-2);font-size:13.5px">El dato que importa es el
+    retraso. Los cambios abruptos se detectan el mismo mes; la migración a e-commerce es un
+    drift <strong>gradual</strong> y el PSI tardó cuatro meses en cruzar 0,25. Eso no se
+    puede saber sin un banco de pruebas con respuesta conocida.</p>
+  </section>
+
+  <footer>Generado desde <span class="mono">artifacts/simulacion_linea_tiempo.json</span> ·
+  2026-09-08 20:44</footer>
+</div>
