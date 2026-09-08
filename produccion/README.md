@@ -184,6 +184,45 @@ La corrección vive sólo acá, no en los notebooks: el TP2 define el encoding s
 
 Vale aclarar por qué se hizo igual: **no mejora las métricas**. Probando el parámetro de suavizado en 0, 10, 50 y 200, el F1 de validación va de 0,596 a 0,623 y el de evaluación se mueve entre 0,599 y 0,635 sin un ganador claro — diferencias dentro del ruido que ya conocemos, con sólo 239 fraudes en evaluación. La justificación es **robustez, no ganancia medida**: se elimina la posibilidad de que dos casos definan la señal de comercio más fuerte del modelo. Se tomó 50 por ser el mejor en F1 de validación, sabiendo que la elección entre 10 y 200 es indistinguible con estos datos.
 
+## Banco de pruebas: ¿el monitoreo detecta lo que debería?
+
+Todo lo anterior monitorea. Pero **¿cómo se sabe si el monitoreo sirve?** Con un solo período real no hay forma: se ve una foto, se dice "detectó el pico de diciembre" y no queda claro si eso fue mérito o casualidad.
+
+`simulacion/` resuelve eso generando dos años sintéticos con **cambios declarados de antemano**, y después verificando qué encontró el monitoreo.
+
+**La trampa que evita.** Generar datos con un patrón y mostrar que el modelo lo detecta no prueba nada: el patrón lo puso uno. Por eso los escenarios viven en [`escenarios.py`](simulacion/escenarios.py) como configuración explícita, y eso permite medir las dos cosas que sí valen: **si detecta lo inyectado** y **si se calla en los meses tranquilos** — la mitad que casi nadie prueba, y la que decide si una alarma se mira o se ignora.
+
+**Los timestamps no se inventan.** Cada año sintético es el histórico real corrido 364 días (52 semanas exactas, así que se conserva el día de la semana), con los escenarios aplicados encima. Las etiquetas de fraude sí se regeneran, desde una regla declarada construida con las tasas realmente observadas en 2025 — nunca desde el modelo, que sería circular.
+
+```bash
+python -m simulacion.generador     # dos años sintéticos con los escenarios aplicados
+python -m simulacion.orquestador   # el lazo mes a mes, y la verificación final
+python -m simulacion.reproductor --periodo 2026-12 --n 800   # replay contra la API
+```
+
+### El resultado
+
+| Escenario | Detectado | Retraso |
+|---|---|---|
+| Temporada alta (dic 2026) | sí, 1/1 meses | 0 meses |
+| Migración a e-commerce (abr–dic 2027) | sí, 3/9 meses | **4 meses** |
+| Campaña de fraude presencial (ago–sep 2027) | sí, 1/2 meses | 0 meses |
+| Temporada alta (dic 2027) | sí, 1/1 meses | 0 meses |
+
+**4 de 4 detectados, 0 falsos positivos en 14 meses tranquilos.** El lazo promovió tres modelos nuevos y en diciembre de 2027 decidió mantener el vigente, porque el challenger perdió por 0,02 de F1.
+
+El dato que importa es el retraso de **4 meses** en la migración a e-commerce. Es un drift gradual: el PSI sube de a poco (0,199 → 0,204 → 0,214 → 0,206 → 0,273) y recién cruza 0,25 al quinto mes. Un cambio abrupto se detecta el mismo mes; uno lento tarda un trimestre largo. Eso no se puede saber sin un banco de pruebas.
+
+### Lo que apareció construyéndolo
+
+**Tres bugs propios, encontrados porque el banco de pruebas tiene respuesta correcta conocida:**
+
+1. **La primera versión del generador repartía los días al azar dentro del mes**, lo que destruía el espaciado entre transacciones de cada cliente. `Tiempo_Entre_Trx_Horas` marcaba drift severo los 24 meses. Peor: el lazo llegó a **reentrenar cuatro veces persiguiendo ese artefacto**, y después las alarmas cesaron porque el modelo se había adaptado a un patrón que no existía. Es exactamente lo que pasa en producción cuando el monitoreo tiene un sesgo sistemático.
+2. **La regla generativa omitía el rubro**, que es el 36,5% del peso del modelo. El fraude sintético caía en `SIN RUBRO` —103.499 filas reales sin un solo fraude— y el recall del modelo se iba a cero. Corregido con las tasas observadas por categoría.
+3. **La regla de alarma exigía tres variables en drift**, lo que desactivaba en la práctica el umbral PSI de 0,25. Ese corte significa justamente "una sola variable acá ya amerita mirar".
+
+**Y un bug del servicio, que los tests no encontraron.** La reproducción en streaming falló con 422 en una transacción: el contrato exigía `importe > 0`, pero el dataset real tiene **78 transacciones de importe cero** con las que el modelo se entrenó. Las pruebas usaban importes inventados y nunca lo tocaron. Rechazarlas en serving le negaría un score a filas que el modelo sí vio entrenando.
+
 ## Lo que falta para que esto sea producción de verdad
 
 Vale la pena ser explícito sobre el límite de este ejercicio:
@@ -210,6 +249,11 @@ produccion/
 ├── aws/
 │   ├── deploy.py       # crea el endpoint serverless de SageMaker
 │   └── invoke.py       # verificación post-despliegue
+├── simulacion/
+│   ├── escenarios.py   # la verdad declarada: qué cambia y cuándo
+│   ├── generador.py    # años sintéticos por desplazamiento del histórico real
+│   ├── reproductor.py  # replay en streaming contra la API
+│   └── orquestador.py  # el lazo completo + verificación
 ├── artifacts/          # modelos versionados, metadata y logs
 ├── tests/
 ├── Dockerfile

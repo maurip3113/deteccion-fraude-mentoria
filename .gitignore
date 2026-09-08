@@ -12,6 +12,9 @@ entrega_tp1_prediccion_eda.py
 produccion/artifacts/predicciones.jsonl
 produccion/artifacts/reporte_monitoreo.json
 produccion/artifacts/log_reentrenamientos.jsonl
+produccion/artifacts/reproduccion.jsonl
+# 14 MB y se regenera con `python -m simulacion.generador`
+produccion/artifacts/transacciones_simuladas.parquet
 
 # Basura habitual de Jupyter/Python
 .ipynb_checkpoints/

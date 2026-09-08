@@ -1,0 +1,624 @@
+{
+  "lag_etiquetas_meses": 2,
+  "factor_alarma": 2.0,
+  "promociones": 3,
+  "escenarios_declarados": [
+    {
+      "nombre": "temporada alta",
+      "desde": "2026-12",
+      "hasta": "2026-12",
+      "descripcion": "Repeticion del pico de fin de anio: mas fraude y mas consumo."
+    },
+    {
+      "nombre": "migracion a e-commerce",
+      "desde": "2027-04",
+      "hasta": "2027-12",
+      "descripcion": "La cartera se vuelve mas digital de forma permanente. Es drift de entrada puro: cambia la mezcla de canales, no la relacion entre canal y fraude."
+    },
+    {
+      "nombre": "campania de fraude presencial",
+      "desde": "2027-08",
+      "hasta": "2027-09",
+      "descripcion": "El fraude se corre a transacciones presenciales, donde el modelo aprendio que casi no hay. La tasa global apenas se mueve: lo que cambia es la relacion. El PSI de entrada no deberia verlo."
+    },
+    {
+      "nombre": "temporada alta 2027",
+      "desde": "2027-12",
+      "hasta": "2027-12",
+      "descripcion": "Segunda repeticion del pico estacional."
+    }
+  ],
+  "periodos": [
+    {
+      "periodo": "2026-01",
+      "n_transacciones": 16327,
+      "tasa_alertas": 0.00227,
+      "factor_alertas": 0.37,
+      "psi_max": 0.1682,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00545,
+      "performance": {
+        "precision": 0.2703,
+        "recall": 0.1124,
+        "f1": 0.1587,
+        "auc_roc": 0.8684,
+        "auc_pr": 0.0844,
+        "tasa_alertas": 0.0023
+      }
+    },
+    {
+      "periodo": "2026-02",
+      "n_transacciones": 14538,
+      "tasa_alertas": 0.00206,
+      "factor_alertas": 0.33,
+      "psi_max": 0.1718,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00543,
+      "performance": {
+        "precision": 0.1,
+        "recall": 0.038,
+        "f1": 0.055,
+        "auc_roc": 0.8802,
+        "auc_pr": 0.0508,
+        "tasa_alertas": 0.0021
+      }
+    },
+    {
+      "periodo": "2026-03",
+      "n_transacciones": 16018,
+      "tasa_alertas": 0.00206,
+      "factor_alertas": 0.33,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00543,
+      "performance": {
+        "precision": 0.2424,
+        "recall": 0.092,
+        "f1": 0.1333,
+        "auc_roc": 0.8628,
+        "auc_pr": 0.0934,
+        "tasa_alertas": 0.0021
+      }
+    },
+    {
+      "periodo": "2026-04",
+      "n_transacciones": 15224,
+      "tasa_alertas": 0.00269,
+      "factor_alertas": 0.43,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00703,
+      "performance": {
+        "precision": 0.1951,
+        "recall": 0.0748,
+        "f1": 0.1081,
+        "auc_roc": 0.8748,
+        "auc_pr": 0.0665,
+        "tasa_alertas": 0.0027
+      }
+    },
+    {
+      "periodo": "2026-05",
+      "n_transacciones": 15693,
+      "tasa_alertas": 0.00166,
+      "factor_alertas": 0.27,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00593,
+      "performance": {
+        "precision": 0.1154,
+        "recall": 0.0323,
+        "f1": 0.0504,
+        "auc_roc": 0.8225,
+        "auc_pr": 0.0398,
+        "tasa_alertas": 0.0017
+      }
+    },
+    {
+      "periodo": "2026-06",
+      "n_transacciones": 16559,
+      "tasa_alertas": 0.00133,
+      "factor_alertas": 0.21,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00628,
+      "performance": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "auc_roc": 0.8509,
+        "auc_pr": 0.0359,
+        "tasa_alertas": 0.0013
+      }
+    },
+    {
+      "periodo": "2026-07",
+      "n_transacciones": 16763,
+      "tasa_alertas": 0.00125,
+      "factor_alertas": 0.2,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00662,
+      "performance": {
+        "precision": 0.1429,
+        "recall": 0.027,
+        "f1": 0.0455,
+        "auc_roc": 0.8666,
+        "auc_pr": 0.0416,
+        "tasa_alertas": 0.0013
+      }
+    },
+    {
+      "periodo": "2026-08",
+      "n_transacciones": 17016,
+      "tasa_alertas": 0.00176,
+      "factor_alertas": 0.28,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00594,
+      "performance": {
+        "precision": 0.0667,
+        "recall": 0.0198,
+        "f1": 0.0305,
+        "auc_roc": 0.8762,
+        "auc_pr": 0.0361,
+        "tasa_alertas": 0.0018
+      }
+    },
+    {
+      "periodo": "2026-09",
+      "n_transacciones": 16610,
+      "tasa_alertas": 0.00241,
+      "factor_alertas": 0.39,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00632,
+      "performance": {
+        "precision": 0.05,
+        "recall": 0.019,
+        "f1": 0.0276,
+        "auc_roc": 0.8794,
+        "auc_pr": 0.0434,
+        "tasa_alertas": 0.0024
+      }
+    },
+    {
+      "periodo": "2026-10",
+      "n_transacciones": 17055,
+      "tasa_alertas": 0.00299,
+      "factor_alertas": 0.48,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.0061,
+      "performance": {
+        "precision": 0.0784,
+        "recall": 0.0385,
+        "f1": 0.0516,
+        "auc_roc": 0.8874,
+        "auc_pr": 0.0406,
+        "tasa_alertas": 0.003
+      }
+    },
+    {
+      "periodo": "2026-11",
+      "n_transacciones": 17576,
+      "tasa_alertas": 0.00996,
+      "factor_alertas": 1.61,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 1,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00569,
+      "performance": {
+        "precision": 0.0686,
+        "recall": 0.12,
+        "f1": 0.0873,
+        "auc_roc": 0.899,
+        "auc_pr": 0.0489,
+        "tasa_alertas": 0.01
+      }
+    },
+    {
+      "periodo": "2026-12",
+      "n_transacciones": 14154,
+      "tasa_alertas": 0.03427,
+      "factor_alertas": 5.53,
+      "psi_max": 0.1368,
+      "variable_psi_max": "Trx_Importe",
+      "variables_con_drift": 1,
+      "alarma": true,
+      "modelo_version": 1,
+      "escenarios_activos": [
+        "temporada alta"
+      ],
+      "tasa_fraude_real": 0.03476,
+      "performance": {
+        "precision": 0.233,
+        "recall": 0.2297,
+        "f1": 0.2313,
+        "auc_roc": 0.8957,
+        "auc_pr": 0.1879,
+        "tasa_alertas": 0.0343
+      },
+      "reentrenamiento": {
+        "resultado": "promover",
+        "corte_etiquetas": "2026-10",
+        "holdout": "2026-10",
+        "f1_campeon": 0.0516,
+        "f1_challenger": 0.1948,
+        "delta_f1": 0.1432
+      },
+      "promovido_a": 2
+    },
+    {
+      "periodo": "2027-01",
+      "n_transacciones": 16120,
+      "tasa_alertas": 0.00645,
+      "factor_alertas": 0.63,
+      "psi_max": 0.1279,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00515,
+      "performance": {
+        "precision": 0.3558,
+        "recall": 0.4458,
+        "f1": 0.3957,
+        "auc_roc": 0.9768,
+        "auc_pr": 0.3827,
+        "tasa_alertas": 0.0065
+      }
+    },
+    {
+      "periodo": "2027-02",
+      "n_transacciones": 14494,
+      "tasa_alertas": 0.00669,
+      "factor_alertas": 0.65,
+      "psi_max": 0.1341,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00483,
+      "performance": {
+        "precision": 0.3196,
+        "recall": 0.4429,
+        "f1": 0.3713,
+        "auc_roc": 0.9681,
+        "auc_pr": 0.3221,
+        "tasa_alertas": 0.0067
+      }
+    },
+    {
+      "periodo": "2027-03",
+      "n_transacciones": 16164,
+      "tasa_alertas": 0.00755,
+      "factor_alertas": 0.73,
+      "psi_max": 0.0,
+      "variable_psi_max": null,
+      "variables_con_drift": 0,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [],
+      "tasa_fraude_real": 0.00575,
+      "performance": {
+        "precision": 0.377,
+        "recall": 0.4946,
+        "f1": 0.4279,
+        "auc_roc": 0.97,
+        "auc_pr": 0.4318,
+        "tasa_alertas": 0.0075
+      }
+    },
+    {
+      "periodo": "2027-04",
+      "n_transacciones": 15357,
+      "tasa_alertas": 0.01185,
+      "factor_alertas": 1.15,
+      "psi_max": 0.1992,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [
+        "migracion a e-commerce"
+      ],
+      "tasa_fraude_real": 0.00606,
+      "performance": {
+        "precision": 0.3022,
+        "recall": 0.5914,
+        "f1": 0.4,
+        "auc_roc": 0.9699,
+        "auc_pr": 0.3918,
+        "tasa_alertas": 0.0119
+      }
+    },
+    {
+      "periodo": "2027-05",
+      "n_transacciones": 15737,
+      "tasa_alertas": 0.00966,
+      "factor_alertas": 0.94,
+      "psi_max": 0.2036,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [
+        "migracion a e-commerce"
+      ],
+      "tasa_fraude_real": 0.00629,
+      "performance": {
+        "precision": 0.3618,
+        "recall": 0.5556,
+        "f1": 0.4382,
+        "auc_roc": 0.9738,
+        "auc_pr": 0.3636,
+        "tasa_alertas": 0.0097
+      }
+    },
+    {
+      "periodo": "2027-06",
+      "n_transacciones": 16589,
+      "tasa_alertas": 0.00856,
+      "factor_alertas": 0.83,
+      "psi_max": 0.2135,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [
+        "migracion a e-commerce"
+      ],
+      "tasa_fraude_real": 0.00627,
+      "performance": {
+        "precision": 0.3662,
+        "recall": 0.5,
+        "f1": 0.4228,
+        "auc_roc": 0.9757,
+        "auc_pr": 0.3594,
+        "tasa_alertas": 0.0086
+      }
+    },
+    {
+      "periodo": "2027-07",
+      "n_transacciones": 16680,
+      "tasa_alertas": 0.00875,
+      "factor_alertas": 0.85,
+      "psi_max": 0.2058,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 2,
+      "escenarios_activos": [
+        "migracion a e-commerce"
+      ],
+      "tasa_fraude_real": 0.00689,
+      "performance": {
+        "precision": 0.3356,
+        "recall": 0.4261,
+        "f1": 0.3755,
+        "auc_roc": 0.9543,
+        "auc_pr": 0.3333,
+        "tasa_alertas": 0.0088
+      }
+    },
+    {
+      "periodo": "2027-08",
+      "n_transacciones": 17176,
+      "tasa_alertas": 0.00966,
+      "factor_alertas": 0.94,
+      "psi_max": 0.2734,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": true,
+      "modelo_version": 2,
+      "escenarios_activos": [
+        "migracion a e-commerce",
+        "campania de fraude presencial"
+      ],
+      "tasa_fraude_real": 0.00996,
+      "performance": {
+        "precision": 0.1145,
+        "recall": 0.1111,
+        "f1": 0.1128,
+        "auc_roc": 0.8398,
+        "auc_pr": 0.0613,
+        "tasa_alertas": 0.0097
+      },
+      "reentrenamiento": {
+        "resultado": "promover",
+        "corte_etiquetas": "2027-06",
+        "holdout": "2027-06",
+        "f1_campeon": 0.4228,
+        "f1_challenger": 0.528,
+        "delta_f1": 0.1052
+      },
+      "promovido_a": 3
+    },
+    {
+      "periodo": "2027-09",
+      "n_transacciones": 16807,
+      "tasa_alertas": 0.01172,
+      "factor_alertas": 1.03,
+      "psi_max": 0.2229,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 3,
+      "escenarios_activos": [
+        "migracion a e-commerce",
+        "campania de fraude presencial"
+      ],
+      "tasa_fraude_real": 0.01196,
+      "performance": {
+        "precision": 0.2792,
+        "recall": 0.2736,
+        "f1": 0.2764,
+        "auc_roc": 0.8747,
+        "auc_pr": 0.1974,
+        "tasa_alertas": 0.0117
+      }
+    },
+    {
+      "periodo": "2027-10",
+      "n_transacciones": 16692,
+      "tasa_alertas": 0.0121,
+      "factor_alertas": 1.06,
+      "psi_max": 0.2386,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": false,
+      "modelo_version": 3,
+      "escenarios_activos": [
+        "migracion a e-commerce"
+      ],
+      "tasa_fraude_real": 0.00737,
+      "performance": {
+        "precision": 0.2673,
+        "recall": 0.439,
+        "f1": 0.3323,
+        "auc_roc": 0.9704,
+        "auc_pr": 0.2494,
+        "tasa_alertas": 0.0121
+      }
+    },
+    {
+      "periodo": "2027-11",
+      "n_transacciones": 18002,
+      "tasa_alertas": 0.01383,
+      "factor_alertas": 1.21,
+      "psi_max": 0.2874,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 1,
+      "alarma": true,
+      "modelo_version": 3,
+      "escenarios_activos": [
+        "migracion a e-commerce"
+      ],
+      "tasa_fraude_real": 0.00572,
+      "reentrenamiento": {
+        "resultado": "promover",
+        "corte_etiquetas": "2027-09",
+        "holdout": "2027-09",
+        "f1_campeon": 0.2764,
+        "f1_challenger": 0.3697,
+        "delta_f1": 0.0934
+      },
+      "promovido_a": 4
+    },
+    {
+      "periodo": "2027-12",
+      "n_transacciones": 12530,
+      "tasa_alertas": 0.05603,
+      "factor_alertas": 7.16,
+      "psi_max": 0.4796,
+      "variable_psi_max": "Presencia_Cliente_Presencial",
+      "variables_con_drift": 3,
+      "alarma": true,
+      "modelo_version": 4,
+      "escenarios_activos": [
+        "migracion a e-commerce",
+        "temporada alta 2027"
+      ],
+      "tasa_fraude_real": 0.04501,
+      "reentrenamiento": {
+        "resultado": "mantener",
+        "corte_etiquetas": "2027-10",
+        "holdout": "2027-10",
+        "f1_campeon": 0.4295,
+        "f1_challenger": 0.408,
+        "delta_f1": -0.0215
+      }
+    }
+  ],
+  "verificacion": {
+    "escenarios": [
+      {
+        "escenario": "temporada alta",
+        "meses": 1,
+        "meses_con_alarma": 1,
+        "detectado": true,
+        "primer_mes": "2026-12",
+        "primera_alarma": "2026-12",
+        "retraso_meses": 0
+      },
+      {
+        "escenario": "migracion a e-commerce",
+        "meses": 9,
+        "meses_con_alarma": 3,
+        "detectado": true,
+        "primer_mes": "2027-04",
+        "primera_alarma": "2027-08",
+        "retraso_meses": 4
+      },
+      {
+        "escenario": "campania de fraude presencial",
+        "meses": 2,
+        "meses_con_alarma": 1,
+        "detectado": true,
+        "primer_mes": "2027-08",
+        "primera_alarma": "2027-08",
+        "retraso_meses": 0
+      },
+      {
+        "escenario": "temporada alta 2027",
+        "meses": 1,
+        "meses_con_alarma": 1,
+        "detectado": true,
+        "primer_mes": "2027-12",
+        "primera_alarma": "2027-12",
+        "retraso_meses": 0
+      }
+    ],
+    "detectados": 4,
+    "total_escenarios": 4,
+    "meses_tranquilos": 14,
+    "falsos_positivos": 0,
+    "meses_falso_positivo": []
+  }
+}

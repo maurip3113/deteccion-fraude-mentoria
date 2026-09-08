@@ -39,7 +39,12 @@ LOG_PREDICCIONES = DIR_ARTEFACTOS / "predicciones.jsonl"
 class Transaccion(BaseModel):
     cliente_id: int = Field(..., description="Identificador del cliente")
     trx_timestamp: datetime = Field(..., description="Fecha y hora de la transaccion")
-    trx_importe: float = Field(..., gt=0)
+    # ge=0 y no gt=0: el dataset real tiene 78 transacciones de importe cero
+    # (ajustes y movimientos que no son compras con tarjeta, ninguna es fraude).
+    # El modelo se entreno con ellas, asi que rechazarlas en serving seria negarle
+    # un score a filas que si vio entrenando. Lo detecto la reproduccion en
+    # streaming, no los tests: las pruebas usaban importes inventados.
+    trx_importe: float = Field(..., ge=0)
     trx_moneda: int = Field(..., description="1 = pesos, 2 = dolares")
     trx_rubro_red: int = Field(..., description="Codigo de rubro del comercio")
     trx_tipo_terminal: int = Field(..., ge=0, le=12)

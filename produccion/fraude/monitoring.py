@@ -60,6 +60,19 @@ def clasificar(valor_psi: float) -> str:
     return "estable"
 
 
+def hay_alarma(tabla: pd.DataFrame, factor_alertas: float,
+               factor_limite: float = 2.0) -> bool:
+    """Cuando el monitoreo pide intervencion.
+
+    Tres disparadores independientes. El primero existe porque el corte 0,25 del
+    PSI significa exactamente eso: una sola variable ahi ya amerita mirar, y
+    exigir tres a la vez desactivaba en la practica el umbral mas importante.
+    """
+    severas = (tabla["estado"] == "SEVERO").sum()
+    con_drift = (~tabla["estado"].isin(ESTADOS_SIN_DRIFT)).sum()
+    return bool(severas >= 1 or con_drift >= 3 or factor_alertas >= factor_limite)
+
+
 def drift_de_datos(X_nuevo: pd.DataFrame, referencia: dict, X_ref: pd.DataFrame | None = None) -> pd.DataFrame:
     filas = []
     for col, ref in referencia.items():
@@ -135,7 +148,7 @@ def reporte(X_ref, proba_ref, X_nuevo, proba_nuevo, bundle, y_nuevo=None, etique
         resultado["performance"] = performance
         resultado["tasa_fraude_observada"] = float(y_nuevo.mean())
 
-    alarma = resultado["variables_con_drift"] >= 3 or factor >= 2
+    alarma = hay_alarma(tabla, factor)
     resultado["requiere_atencion"] = bool(alarma)
     print(f"\n>> {'ALARMA: amerita revision y posible reentrenamiento.' if alarma else 'Sin alarmas.'}")
     return resultado

@@ -142,6 +142,18 @@ def test_invocations_no_modifica_el_estado_del_cliente():
     assert len(probabilidades) == 1
 
 
+def test_acepta_importe_cero():
+    """El dataset real tiene 78 transacciones de importe cero y el modelo las vio.
+
+    Rechazarlas en serving crearía una inconsistencia con el entrenamiento. Un
+    importe negativo, en cambio, sí es imposible y se sigue rechazando.
+    """
+    r = cliente.post("/predict", json=dict(TRX_BASE, trx_importe=0.0),
+                     params={"actualizar_estado": False})
+    assert r.status_code == 200
+    assert cliente.post("/predict", json=dict(TRX_BASE, trx_importe=-1.0)).status_code == 422
+
+
 def test_la_prediccion_viene_explicada():
     """Una alerta sin razones le deja al analista todo el trabajo."""
     cuerpo = cliente.post("/predict", json=TRX_BASE,

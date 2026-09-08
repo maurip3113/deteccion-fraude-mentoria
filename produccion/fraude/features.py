@@ -83,15 +83,27 @@ def cargar_historico(path_del: str, path_xlsx: str) -> pd.DataFrame:
         df["Trx_Fecha"].dt.strftime("%Y-%m-%d") + " " + df["Trx_Hora_fmt"].astype(str),
         errors="coerce",
     )
-    df = df.sort_values(["Cliente_Id", "Trx_Timestamp"]).reset_index(drop=True)
-
-    df["Tiempo_Entre_Trx_Horas"] = df.groupby("Cliente_Id")["Trx_Timestamp"].diff().dt.total_seconds() / 3600
     df["Hora_Dia"] = df["Trx_Hora_fmt"].apply(lambda x: x.hour)
     df["Es_Fin_de_Semana"] = df["Trx_Fecha"].dt.dayofweek.isin([5, 6]).astype(int)
     df["Presencia_Cliente"] = df["Trx_TipoTerminal"].astype(int).map(MAPA_PRESENCIA)
     df["Es_Moneda_Dolar"] = (df["Trx_Moneda"] == MONEDA_DOLAR).astype(int)
 
-    # Ventana expansiva: cada transaccion se compara solo contra el pasado del cliente.
+    return features_de_historial(df)
+
+
+def features_de_historial(df: pd.DataFrame) -> pd.DataFrame:
+    """Variables que dependen del pasado del cliente, con ventana expansiva.
+
+    Va aparte porque tambien la usa la simulacion: al agregar anios sinteticos, el
+    contador de transacciones y el desvio del importe tienen que continuar desde
+    donde quedo el historico real, no reiniciarse.
+    """
+    df = df.sort_values(["Cliente_Id", "Trx_Timestamp"]).reset_index(drop=True)
+
+    df["Tiempo_Entre_Trx_Horas"] = (
+        df.groupby("Cliente_Id")["Trx_Timestamp"].diff().dt.total_seconds() / 3600
+    )
+
     grp = df.groupby("Cliente_Id")["Trx_Importe"]
     df["Cliente_Trx_Count"] = df.groupby("Cliente_Id").cumcount()
     promedio = grp.transform(lambda s: s.expanding().mean().shift(1)).fillna(df["Trx_Importe"])
