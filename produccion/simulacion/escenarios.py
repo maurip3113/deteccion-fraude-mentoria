@@ -75,6 +75,15 @@ class Escenario:
     # global no se mueve, pero la relacion entre variables y fraude si.
     invierte_presencia: bool = False
 
+    # --- Firma esperada: como deberia delatarse este escenario ---
+    # Sin esto la verificacion solo puede mirar si hubo *alguna* alarma dentro de
+    # la ventana, y cuando dos escenarios se superponen le atribuye a uno el
+    # merito del otro. Declarando la firma se puede exigir que el disparador de
+    # la alarma corresponda al escenario, y no solo que coincida en el tiempo.
+    variables_afectadas: tuple[str, ...] = ()   # features que deberia mover
+    espera_factor_alertas: bool = False         # deberia disparar por volumen
+    detectable_sin_etiquetas: bool = True       # False = solo visible con etiquetas
+
     def activo_en(self, periodo: str) -> bool:
         return self.desde <= periodo <= self.hasta
 
@@ -86,6 +95,8 @@ ESCENARIOS: list[Escenario] = [
         descripcion="Repeticion del pico de fin de anio: mas fraude y mas consumo.",
         factor_fraude=6.0,
         factor_importe=1.25,
+        variables_afectadas=("Trx_Importe", "Es_Outlier_Importe"),
+        espera_factor_alertas=True,
     ),
     Escenario(
         nombre="migracion a e-commerce",
@@ -94,6 +105,7 @@ ESCENARIOS: list[Escenario] = [
                     "de entrada puro: cambia la mezcla de canales, no la relacion "
                     "entre canal y fraude.",
         desplaza_ecommerce=0.18,
+        variables_afectadas=("Presencia_Cliente_Presencial",),
     ),
     Escenario(
         nombre="campania de fraude presencial",
@@ -103,6 +115,9 @@ ESCENARIOS: list[Escenario] = [
                     "cambia es la relacion. El PSI de entrada no deberia verlo.",
         invierte_presencia=True,
         factor_fraude=1.8,
+        # No deja firma en las entradas: reetiqueta que transacciones son fraude
+        # sin cambiar como se ven. Solo se puede ver cuando llegan las etiquetas.
+        detectable_sin_etiquetas=False,
     ),
     Escenario(
         nombre="temporada alta 2027",
@@ -110,6 +125,8 @@ ESCENARIOS: list[Escenario] = [
         descripcion="Segunda repeticion del pico estacional.",
         factor_fraude=6.0,
         factor_importe=1.25,
+        variables_afectadas=("Trx_Importe", "Es_Outlier_Importe"),
+        espera_factor_alertas=True,
     ),
 ]
 

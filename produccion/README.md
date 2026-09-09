@@ -208,14 +208,18 @@ que se puede trazar una vertical desde un escenario inyectado hasta la métrica 
 
 ### El resultado
 
-| Escenario | Detectado | Retraso |
-|---|---|---|
-| Temporada alta (dic 2026) | sí, 1/1 meses | 0 meses |
-| Migración a e-commerce (abr–dic 2027) | sí, 3/9 meses | **4 meses** |
-| Campaña de fraude presencial (ago–sep 2027) | sí, 1/2 meses | 0 meses |
-| Temporada alta (dic 2027) | sí, 1/1 meses | 0 meses |
+Un escenario cuenta como detectado sólo si **el disparador de la alarma corresponde a su firma declarada**. Que una alarma caiga dentro de su ventana no alcanza: en agosto de 2027 se superponen dos escenarios, y atribuirle a uno el mérito del otro sería contarse un acierto que no ocurrió.
 
-**4 de 4 detectados, 0 falsos positivos en 14 meses tranquilos.** El lazo promovió tres modelos nuevos y en diciembre de 2027 decidió mantener el vigente, porque el challenger perdió por 0,02 de F1.
+| Escenario | Detectado | Retraso | Caída de F1 |
+|---|---|---|---|
+| Temporada alta (dic 2026) | sí, 1/1 meses | 0 meses | — |
+| Migración a e-commerce (abr–dic 2027) | sí, 3/9 meses | **4 meses** | −71 % |
+| Campaña de fraude presencial (ago–sep 2027) | **invisible por diseño** | — | −73 % |
+| Temporada alta (dic 2027) | sí, 1/1 meses | 0 meses | — |
+
+**3 de 3 escenarios visibles detectados, 0 falsos positivos en 14 meses tranquilos.**
+
+El cuarto no es una falla: la campaña presencial cambia *dónde* ocurre el fraude sin cambiar cómo se ven las transacciones. Es *concept drift* puro, el PSI no puede verlo por construcción, y el escenario lo declara de antemano (`detectable_sin_etiquetas=False`). Sí aparece cuando llegan las etiquetas — el F1 cae 73 %. Es la demostración cuantificada de por qué el monitoreo necesita las tres capas y no sólo la primera. El lazo promovió tres modelos nuevos y en diciembre de 2027 decidió mantener el vigente, porque el challenger perdió por 0,02 de F1.
 
 El dato que importa es el retraso de **4 meses** en la migración a e-commerce. Es un drift gradual: el PSI sube de a poco (0,199 → 0,204 → 0,214 → 0,206 → 0,273) y recién cruza 0,25 al quinto mes. Un cambio abrupto se detecta el mismo mes; uno lento tarda un trimestre largo. Eso no se puede saber sin un banco de pruebas.
 

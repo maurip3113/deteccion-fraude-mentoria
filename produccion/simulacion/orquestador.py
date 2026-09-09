@@ -25,7 +25,7 @@ import pandas as pd
 from fraude.api import cargar_bundle
 from fraude.features import cargar_historico
 from fraude.monitoring import (
-    ESTADOS_SIN_DRIFT, drift_de_datos, drift_de_predicciones, hay_alarma,
+    ESTADOS_SIN_DRIFT, disparadores, drift_de_datos, drift_de_predicciones,
 )
 from fraude.train import ajustar, evaluar, leer_mapa_rubro, referencia_drift, umbral_optimo_f1
 from simulacion import escenarios as esc
@@ -139,7 +139,8 @@ def correr(path_datos: str, path_doc: str, reentrenar: bool = True) -> dict:
         pred = drift_de_predicciones(campeon.proba_ref, proba, campeon.umbral)
         con_drift = int((~tabla["estado"].isin(ESTADOS_SIN_DRIFT)).sum())
         factor = pred["tasa_alertas_batch"] / max(tasa_ref, 1e-9)
-        alarma = hay_alarma(tabla, factor, FACTOR_ALERTAS_ALARMA)
+        gatillos = disparadores(tabla, factor, FACTOR_ALERTAS_ALARMA)
+        alarma = bool(gatillos)
 
         peor = tabla[~tabla["estado"].isin(ESTADOS_SIN_DRIFT)]
         psi_max = float(peor["psi"].max()) if len(peor) else 0.0
@@ -155,6 +156,10 @@ def correr(path_datos: str, path_doc: str, reentrenar: bool = True) -> dict:
             "variable_psi_max": var_peor,
             "variables_con_drift": con_drift,
             "alarma": bool(alarma),
+            "disparadores": gatillos,
+            "variables_severas": tabla.loc[tabla["estado"] == "SEVERO", "variable"].tolist(),
+            "variables_en_drift": tabla.loc[
+                ~tabla["estado"].isin(ESTADOS_SIN_DRIFT), "variable"].tolist(),
             "modelo_version": campeon.version,
             "escenarios_activos": activos,
             "tasa_fraude_real": round(float(mes["Es_Fraude"].mean()), 5),
@@ -210,32 +215,97 @@ def correr(path_datos: str, path_doc: str, reentrenar: bool = True) -> dict:
     return resultado
 
 
+CAIDA_F1_RELATIVA = 0.30  # cuanto tiene que caer el F1 para llamarlo degradacion
+
+
+def atribuible(registro: dict, e: esc.Escenario) -> bool:
+    """¿La alarma de este mes se explica por *este* escenario?
+
+    Que una alarma caiga dentro de la ventana de un escenario no significa que la
+    haya causado: con dos cambios superpuestos, el gatillo puede pertenecer al
+    otro. Se exige que el disparador corresponda a la firma declarada.
+    """
+    afectadas = set(e.variables_afectadas)
+
+    if "psi_severo" in registro["disparadores"]:
+        if afectadas & set(registro.get("variables_severas", [])):
+            return True
+    if "multiples_moderadas" in registro["disparadores"]:
+        if afectadas & set(registro.get("variables_en_drift", [])):
+            return True
+    if "factor_alertas" in registro["disparadores"] and e.espera_factor_alertas:
+        return True
+    return False
+
+
+def degradacion(meses: list[str], por_periodo: dict) -> dict | None:
+    """Caida de F1 dentro de la ventana respecto de los tres meses previos.
+
+    Es la senal que sí ve el concept drift, y la que solo aparece cuando llegan
+    las etiquetas: semanas o meses despues de que el problema empezo.
+    """
+    idx = esc.PERIODOS_SIMULADOS.index(meses[0])
+    previos = [p for p in esc.PERIODOS_SIMULADOS[max(0, idx - 3):idx]
+               if por_periodo.get(p, {}).get("performance")]
+    dentro = [p for p in meses if por_periodo.get(p, {}).get("performance")]
+    if not previos or not dentro:
+        return None
+
+    base = sorted(por_periodo[p]["performance"]["f1"] for p in previos)[len(previos) // 2]
+    peor = min(por_periodo[p]["performance"]["f1"] for p in dentro)
+    if base <= 0:
+        return None
+    caida = (base - peor) / base
+    return {
+        "f1_previo": round(base, 4),
+        "f1_minimo_en_ventana": round(peor, 4),
+        "caida_relativa": round(caida, 4),
+        "degradado": bool(caida >= CAIDA_F1_RELATIVA),
+    }
+
+
 def verificar(linea: list[dict]) -> dict:
-    """Contrasta lo detectado contra lo declarado. Es el punto del ejercicio."""
+    """Contrasta lo detectado contra lo declarado, atribuyendo causa.
+
+    La version anterior contaba como acierto cualquier alarma dentro de la
+    ventana de un escenario. Con la campania presencial y la migracion a
+    e-commerce solapadas en agosto de 2027, eso le daba a la campania el credito
+    de una alarma que en realidad disparo el PSI de la migracion.
+    """
     por_periodo = {r["periodo"]: r for r in linea}
     detalle = []
     for e in esc.ESCENARIOS:
         meses = [p for p in esc.PERIODOS_SIMULADOS if e.activo_en(p) and p in por_periodo]
         con_alarma = [p for p in meses if por_periodo[p]["alarma"]]
+        propias = [p for p in con_alarma if atribuible(por_periodo[p], e)]
+        deg = degradacion(meses, por_periodo) if meses else None
+
         detalle.append({
             "escenario": e.nombre,
+            "detectable_sin_etiquetas": e.detectable_sin_etiquetas,
             "meses": len(meses),
             "meses_con_alarma": len(con_alarma),
-            "detectado": bool(con_alarma),
+            "meses_atribuibles": len(propias),
+            "detectado": bool(propias),
+            "alarma_ajena": bool(con_alarma) and not propias,
             "primer_mes": meses[0] if meses else None,
-            "primera_alarma": con_alarma[0] if con_alarma else None,
+            "primera_alarma_propia": propias[0] if propias else None,
             "retraso_meses": (
-                esc.PERIODOS_SIMULADOS.index(con_alarma[0]) - esc.PERIODOS_SIMULADOS.index(meses[0])
-                if con_alarma else None
+                esc.PERIODOS_SIMULADOS.index(propias[0]) - esc.PERIODOS_SIMULADOS.index(meses[0])
+                if propias else None
             ),
+            "degradacion": deg,
         })
 
     tranquilos = [r for r in linea if esc.es_periodo_tranquilo(r["periodo"])]
     falsos = [r["periodo"] for r in tranquilos if r["alarma"]]
+    esperables = [d for d in detalle if d["detectable_sin_etiquetas"]]
     return {
         "escenarios": detalle,
-        "detectados": sum(d["detectado"] for d in detalle),
+        "detectados": sum(d["detectado"] for d in esperables),
+        "total_esperables": len(esperables),
         "total_escenarios": len(detalle),
+        "invisibles_por_diseno": len(detalle) - len(esperables),
         "meses_tranquilos": len(tranquilos),
         "falsos_positivos": len(falsos),
         "meses_falso_positivo": falsos,
@@ -245,12 +315,27 @@ def verificar(linea: list[dict]) -> dict:
 def imprimir_verificacion(v: dict) -> None:
     print(f"\n{'='*92}\nVERIFICACION: lo detectado contra lo declarado\n{'='*92}")
     for d in v["escenarios"]:
-        estado = "detectado" if d["detectado"] else "NO DETECTADO"
-        retraso = f"retraso {d['retraso_meses']} mes(es)" if d["retraso_meses"] is not None else ""
-        print(f"  {d['escenario']:<34} {estado:<14} "
-              f"{d['meses_con_alarma']}/{d['meses']} meses con alarma  {retraso}")
-    print(f"\n  Escenarios detectados : {v['detectados']} de {v['total_escenarios']}")
-    print(f"  Falsos positivos      : {v['falsos_positivos']} en {v['meses_tranquilos']} meses tranquilos"
+        if d["detectado"]:
+            estado = f"detectado (retraso {d['retraso_meses']} mes)"
+        elif not d["detectable_sin_etiquetas"]:
+            estado = "invisible por diseno"
+        else:
+            estado = "NO DETECTADO"
+        print(f"  {d['escenario']:<34} {estado:<30} "
+              f"{d['meses_atribuibles']}/{d['meses']} meses atribuibles")
+        if d["alarma_ajena"]:
+            print(f"    {'':<32} hubo alarma en la ventana, pero la disparo otro escenario")
+        deg = d["degradacion"]
+        if deg:
+            variacion = -deg["caida_relativa"] * 100  # positivo = el F1 mejoro
+            marca = "SI" if deg["degradado"] else "no"
+            print(f"    {'':<32} degradacion de F1: {marca} "
+                  f"({deg['f1_previo']} -> {deg['f1_minimo_en_ventana']}, "
+                  f"{variacion:+.0f}%)")
+
+    print(f"\n  Detectados sin etiquetas : {v['detectados']} de {v['total_esperables']} esperables"
+          f"  ({v['invisibles_por_diseno']} invisible(s) por diseno)")
+    print(f"  Falsos positivos         : {v['falsos_positivos']} en {v['meses_tranquilos']} meses tranquilos"
           + (f" ({', '.join(v['meses_falso_positivo'])})" if v["meses_falso_positivo"] else ""))
 
 

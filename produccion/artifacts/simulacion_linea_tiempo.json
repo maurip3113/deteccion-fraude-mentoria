@@ -38,6 +38,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00545,
@@ -59,6 +64,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00543,
@@ -80,6 +90,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00543,
@@ -101,6 +114,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00703,
@@ -122,6 +138,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00593,
@@ -143,6 +162,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00628,
@@ -164,6 +186,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00662,
@@ -185,6 +210,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00594,
@@ -206,6 +234,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00632,
@@ -227,6 +258,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.0061,
@@ -248,6 +282,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 1,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00569,
@@ -269,6 +306,13 @@
       "variable_psi_max": "Trx_Importe",
       "variables_con_drift": 1,
       "alarma": true,
+      "disparadores": [
+        "factor_alertas"
+      ],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Trx_Importe"
+      ],
       "modelo_version": 1,
       "escenarios_activos": [
         "temporada alta"
@@ -301,6 +345,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00515,
@@ -322,6 +371,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00483,
@@ -343,6 +397,9 @@
       "variable_psi_max": null,
       "variables_con_drift": 0,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [],
       "modelo_version": 2,
       "escenarios_activos": [],
       "tasa_fraude_real": 0.00575,
@@ -364,6 +421,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [
         "migracion a e-commerce"
@@ -387,6 +449,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [
         "migracion a e-commerce"
@@ -410,6 +477,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [
         "migracion a e-commerce"
@@ -433,6 +505,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [
         "migracion a e-commerce"
@@ -456,6 +533,15 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": true,
+      "disparadores": [
+        "psi_severo"
+      ],
+      "variables_severas": [
+        "Presencia_Cliente_Presencial"
+      ],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 2,
       "escenarios_activos": [
         "migracion a e-commerce",
@@ -489,6 +575,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 3,
       "escenarios_activos": [
         "migracion a e-commerce",
@@ -513,6 +604,11 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": false,
+      "disparadores": [],
+      "variables_severas": [],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 3,
       "escenarios_activos": [
         "migracion a e-commerce"
@@ -536,6 +632,15 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 1,
       "alarma": true,
+      "disparadores": [
+        "psi_severo"
+      ],
+      "variables_severas": [
+        "Presencia_Cliente_Presencial"
+      ],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial"
+      ],
       "modelo_version": 3,
       "escenarios_activos": [
         "migracion a e-commerce"
@@ -560,6 +665,19 @@
       "variable_psi_max": "Presencia_Cliente_Presencial",
       "variables_con_drift": 3,
       "alarma": true,
+      "disparadores": [
+        "psi_severo",
+        "multiples_moderadas",
+        "factor_alertas"
+      ],
+      "variables_severas": [
+        "Presencia_Cliente_Presencial"
+      ],
+      "variables_en_drift": [
+        "Presencia_Cliente_Presencial",
+        "Trx_Importe",
+        "Es_Moneda_Dolar"
+      ],
       "modelo_version": 4,
       "escenarios_activos": [
         "migracion a e-commerce",
@@ -580,43 +698,76 @@
     "escenarios": [
       {
         "escenario": "temporada alta",
+        "detectable_sin_etiquetas": true,
         "meses": 1,
         "meses_con_alarma": 1,
+        "meses_atribuibles": 1,
         "detectado": true,
+        "alarma_ajena": false,
         "primer_mes": "2026-12",
-        "primera_alarma": "2026-12",
-        "retraso_meses": 0
+        "primera_alarma_propia": "2026-12",
+        "retraso_meses": 0,
+        "degradacion": {
+          "f1_previo": 0.0516,
+          "f1_minimo_en_ventana": 0.2313,
+          "caida_relativa": -3.4826,
+          "degradado": false
+        }
       },
       {
         "escenario": "migracion a e-commerce",
+        "detectable_sin_etiquetas": true,
         "meses": 9,
         "meses_con_alarma": 3,
+        "meses_atribuibles": 3,
         "detectado": true,
+        "alarma_ajena": false,
         "primer_mes": "2027-04",
-        "primera_alarma": "2027-08",
-        "retraso_meses": 4
+        "primera_alarma_propia": "2027-08",
+        "retraso_meses": 4,
+        "degradacion": {
+          "f1_previo": 0.3957,
+          "f1_minimo_en_ventana": 0.1128,
+          "caida_relativa": 0.7149,
+          "degradado": true
+        }
       },
       {
         "escenario": "campania de fraude presencial",
+        "detectable_sin_etiquetas": false,
         "meses": 2,
         "meses_con_alarma": 1,
-        "detectado": true,
+        "meses_atribuibles": 0,
+        "detectado": false,
+        "alarma_ajena": true,
         "primer_mes": "2027-08",
-        "primera_alarma": "2027-08",
-        "retraso_meses": 0
+        "primera_alarma_propia": null,
+        "retraso_meses": null,
+        "degradacion": {
+          "f1_previo": 0.4228,
+          "f1_minimo_en_ventana": 0.1128,
+          "caida_relativa": 0.7332,
+          "degradado": true
+        }
       },
       {
         "escenario": "temporada alta 2027",
+        "detectable_sin_etiquetas": true,
         "meses": 1,
         "meses_con_alarma": 1,
+        "meses_atribuibles": 1,
         "detectado": true,
+        "alarma_ajena": false,
         "primer_mes": "2027-12",
-        "primera_alarma": "2027-12",
-        "retraso_meses": 0
+        "primera_alarma_propia": "2027-12",
+        "retraso_meses": 0,
+        "degradacion": null
       }
     ],
-    "detectados": 4,
+    "detectados": 3,
+    "total_esperables": 3,
     "total_escenarios": 4,
+    "invisibles_por_diseno": 1,
     "meses_tranquilos": 14,
     "falsos_positivos": 0,
     "meses_falso_positivo": []

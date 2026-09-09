@@ -179,14 +179,30 @@ def construir(d: dict) -> str:
     psi = [p["psi_max"] for p in per]
     recall = [p.get("performance", {}).get("recall", 0.0) for p in per]
 
-    filas_ver = "".join(
-        f"""<tr><td>{NOMBRES_CORTOS.get(e['escenario'], e['escenario'])}</td>
-        <td class="n">{e['meses_con_alarma']}/{e['meses']}</td>
-        <td class="n">{'—' if e['retraso_meses'] is None else f"{e['retraso_meses']} mes" + ('es' if e['retraso_meses'] != 1 else '')}</td>
-        <td><span class="chip {'ok' if e['detectado'] else 'mal'}">
-        {'detectado' if e['detectado'] else 'no detectado'}</span></td></tr>"""
-        for e in v["escenarios"]
-    )
+    def fila_ver(e: dict) -> str:
+        if e["detectado"]:
+            chip, texto = "ok", "detectado"
+        elif not e["detectable_sin_etiquetas"]:
+            chip, texto = "neutro", "invisible por diseño"
+        else:
+            chip, texto = "mal", "no detectado"
+        retraso = ("—" if e["retraso_meses"] is None
+                   else f"{e['retraso_meses']} mes" + ("es" if e["retraso_meses"] != 1 else ""))
+        deg = e.get("degradacion")
+        if deg and deg["degradado"]:
+            caida = f"−{deg['caida_relativa']*100:.0f}% de F1"
+        elif deg:
+            caida = "sin caída"
+        else:
+            caida = "—"
+        nota = ('<div class="nota-f">hubo alarma en la ventana, pero la disparó otro '
+                'escenario</div>' if e.get("alarma_ajena") else "")
+        return (f'<tr><td>{NOMBRES_CORTOS.get(e["escenario"], e["escenario"])}{nota}</td>'
+                f'<td class="n">{e["meses_atribuibles"]}/{e["meses"]}</td>'
+                f'<td class="n">{retraso}</td><td class="n">{caida}</td>'
+                f'<td><span class="chip {chip}">{texto}</span></td></tr>')
+
+    filas_ver = "".join(fila_ver(e) for e in v["escenarios"])
 
     return f"""<title>Simulación del Monitoreo</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -266,6 +282,8 @@ td.n{{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}}
 .chip{{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:5px}}
 .chip.ok{{background:var(--wash-ok);color:var(--good)}}
 .chip.mal{{background:var(--wash-mal);color:var(--critical)}}
+.chip.neutro{{background:var(--line);color:var(--ink-2)}}
+.nota-f{{color:var(--ink-3);font-size:11.5px;margin-top:3px;max-width:34ch}}
 footer{{color:var(--ink-3);font-size:12px;text-align:center}}
 @media(max-width:640px){{body{{padding:22px 12px 40px}}h1{{font-size:22px}}}}
 </style>
@@ -279,8 +297,9 @@ footer{{color:var(--ink-3);font-size:12px;text-align:center}}
   </header>
 
   <div class="tiras">
-    <div class="tira"><div class="v ok">{v['detectados']}/{v['total_escenarios']}</div>
-      <div class="e">escenarios detectados</div></div>
+    <div class="tira"><div class="v ok">{v['detectados']}/{v['total_esperables']}</div>
+      <div class="e">detectados de los {v['total_esperables']} visibles sin etiquetas
+      ({v['invisibles_por_diseno']} sólo se ve con etiquetas)</div></div>
     <div class="tira"><div class="v {'ok' if v['falsos_positivos'] == 0 else 'al'}">{v['falsos_positivos']}</div>
       <div class="e">falsos positivos en {v['meses_tranquilos']} meses tranquilos</div></div>
     <div class="tira"><div class="v">{d['promociones']}</div>
@@ -312,10 +331,16 @@ footer{{color:var(--ink-3);font-size:12px;text-align:center}}
   <section>
     <h2>Verificación</h2>
     <table>
-      <tr><th>Escenario</th><th>Meses con alarma</th><th>Retraso</th><th>Resultado</th></tr>
+      <tr><th>Escenario</th><th>Meses atribuibles</th><th>Retraso</th><th>Performance</th><th>Resultado</th></tr>
       {filas_ver}
     </table>
-    <p style="margin-top:16px;color:var(--ink-2);font-size:13.5px">El dato que importa es el
+    <p style="margin-top:16px;color:var(--ink-2);font-size:13.5px">Un escenario cuenta como
+    detectado sólo si el <strong>disparador de la alarma corresponde a su firma declarada</strong>.
+    Que una alarma caiga dentro de su ventana no alcanza: en agosto de 2027 se superponen dos
+    escenarios, y la alarma la disparó el PSI de la migración, no la campaña. La campaña es
+    concept drift puro — no deja rastro en las entradas y sólo aparece cuando llegan las
+    etiquetas, con una caída del 73% en F1.</p>
+    <p style="color:var(--ink-2);font-size:13.5px">El otro dato que importa es el
     retraso. Los cambios abruptos se detectan el mismo mes; la migración a e-commerce es un
     drift <strong>gradual</strong> y el PSI tardó cuatro meses en cruzar 0,25. Eso no se
     puede saber sin un banco de pruebas con respuesta conocida.</p>

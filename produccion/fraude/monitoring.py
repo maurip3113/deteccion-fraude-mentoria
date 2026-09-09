@@ -60,6 +60,25 @@ def clasificar(valor_psi: float) -> str:
     return "estable"
 
 
+def disparadores(tabla: pd.DataFrame, factor_alertas: float,
+                 factor_limite: float = 2.0) -> list[str]:
+    """Cuales de los tres gatillos se activaron. Lista vacia = sin alarma.
+
+    Devolver *cuales* y no solo si hubo alarma permite despues atribuir la causa.
+    Con dos cambios superpuestos en el mismo mes, saber que el gatillo fue el PSI
+    de una variable concreta es lo que distingue haber detectado algo de haber
+    coincidido en el tiempo con otra cosa.
+    """
+    activos = []
+    if (tabla["estado"] == "SEVERO").any():
+        activos.append("psi_severo")
+    if (~tabla["estado"].isin(ESTADOS_SIN_DRIFT)).sum() >= 3:
+        activos.append("multiples_moderadas")
+    if factor_alertas >= factor_limite:
+        activos.append("factor_alertas")
+    return activos
+
+
 def hay_alarma(tabla: pd.DataFrame, factor_alertas: float,
                factor_limite: float = 2.0) -> bool:
     """Cuando el monitoreo pide intervencion.
@@ -68,9 +87,7 @@ def hay_alarma(tabla: pd.DataFrame, factor_alertas: float,
     PSI significa exactamente eso: una sola variable ahi ya amerita mirar, y
     exigir tres a la vez desactivaba en la practica el umbral mas importante.
     """
-    severas = (tabla["estado"] == "SEVERO").sum()
-    con_drift = (~tabla["estado"].isin(ESTADOS_SIN_DRIFT)).sum()
-    return bool(severas >= 1 or con_drift >= 3 or factor_alertas >= factor_limite)
+    return bool(disparadores(tabla, factor_alertas, factor_limite))
 
 
 def drift_de_datos(X_nuevo: pd.DataFrame, referencia: dict, X_ref: pd.DataFrame | None = None) -> pd.DataFrame:
