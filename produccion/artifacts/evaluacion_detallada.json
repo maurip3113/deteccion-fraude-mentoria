@@ -1,0 +1,148 @@
+{
+  "intervalo_f1": {
+    "f1_puntual": 0.5991,
+    "ic95_bajo": 0.5394,
+    "ic95_alto": 0.6512,
+    "desvio": 0.0281,
+    "diferencia_minima_distinguible": 0.0563,
+    "n_fraudes": 239,
+    "n_transacciones": 38504
+  },
+  "segmentos": [
+    {
+      "corte": "moneda",
+      "segmento": "dolares",
+      "trx": 1139,
+      "fraudes": 124,
+      "precision": 0.772,
+      "recall": 0.766,
+      "f1": 0.769
+    },
+    {
+      "corte": "importe",
+      "segmento": "bajo",
+      "trx": 9626,
+      "fraudes": 140,
+      "precision": 0.75,
+      "recall": 0.707,
+      "f1": 0.728
+    },
+    {
+      "corte": "franja",
+      "segmento": "madrugada",
+      "trx": 1672,
+      "fraudes": 43,
+      "precision": 0.737,
+      "recall": 0.651,
+      "f1": 0.691
+    },
+    {
+      "corte": "franja",
+      "segmento": "noche",
+      "trx": 11991,
+      "fraudes": 84,
+      "precision": 0.705,
+      "recall": 0.655,
+      "f1": 0.679
+    },
+    {
+      "corte": "canal",
+      "segmento": "No presencial",
+      "trx": 13058,
+      "fraudes": 205,
+      "precision": 0.689,
+      "recall": 0.615,
+      "f1": 0.649
+    },
+    {
+      "corte": "historial",
+      "segmento": ">200",
+      "trx": 17743,
+      "fraudes": 118,
+      "precision": 0.683,
+      "recall": 0.602,
+      "f1": 0.64
+    },
+    {
+      "corte": "historial",
+      "segmento": "50-200",
+      "trx": 14001,
+      "fraudes": 89,
+      "precision": 0.676,
+      "recall": 0.517,
+      "f1": 0.586
+    },
+    {
+      "corte": "franja",
+      "segmento": "manana",
+      "trx": 11698,
+      "fraudes": 60,
+      "precision": 0.703,
+      "recall": 0.433,
+      "f1": 0.536
+    },
+    {
+      "corte": "historial",
+      "segmento": "<50 trx",
+      "trx": 6760,
+      "fraudes": 32,
+      "precision": 0.565,
+      "recall": 0.406,
+      "f1": 0.473
+    },
+    {
+      "corte": "franja",
+      "segmento": "tarde",
+      "trx": 13143,
+      "fraudes": 52,
+      "precision": 0.5,
+      "recall": 0.404,
+      "f1": 0.447
+    },
+    {
+      "corte": "importe",
+      "segmento": "medio-bajo",
+      "trx": 9701,
+      "fraudes": 17,
+      "precision": 0.545,
+      "recall": 0.353,
+      "f1": 0.429
+    },
+    {
+      "corte": "importe",
+      "segmento": "alto",
+      "trx": 9620,
+      "fraudes": 62,
+      "precision": 0.538,
+      "recall": 0.339,
+      "f1": 0.416
+    },
+    {
+      "corte": "moneda",
+      "segmento": "pesos",
+      "trx": 37365,
+      "fraudes": 115,
+      "precision": 0.486,
+      "recall": 0.304,
+      "f1": 0.374
+    },
+    {
+      "corte": "importe",
+      "segmento": "medio-alto",
+      "trx": 9557,
+      "fraudes": 20,
+      "precision": 0.308,
+      "recall": 0.2,
+      "f1": 0.242
+    },
+    {
+      "corte": "canal",
+      "segmento": "Presencial",
+      "trx": 25446,
+      "fraudes": 34,
+      "precision": 0.333,
+      "recall": 0.118,
+      "f1": 0.174
+    }
+  ]
+}

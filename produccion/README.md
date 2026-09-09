@@ -233,6 +233,40 @@ El dato que importa es el retraso de **4 meses** en la migración a e-commerce. 
 
 **Y un bug del servicio, que los tests no encontraron.** La reproducción en streaming falló con 422 en una transacción: el contrato exigía `importe > 0`, pero el dataset real tiene **78 transacciones de importe cero** con las que el modelo se entrenó. Las pruebas usaban importes inventados y nunca lo tocaron. Rechazarlas en serving le negaría un score a filas que el modelo sí vio entrenando.
 
+## Cuánto vale el número, y dónde deja de valer
+
+```bash
+python -m fraude.evaluacion
+```
+
+**Un F1 puntual no dice cuánto se puede confiar en él.** Con 239 fraudes en evaluación, un bootstrap de 2.000 remuestreos da:
+
+```
+F1 puntual        0,5991
+IC 95%            [0,5394 , 0,6512]     desvío 0,0281
+```
+
+De ahí sale la conclusión que corrige una afirmación del proyecto: **dos modelos que difieran menos de ~0,056 en F1 son indistinguibles con estos datos**. La diferencia entre XGBoost (0,653) y Random Forest (0,645) es de 0,008 — la séptima parte de la banda. Decir que uno es "el mejor modelo del proyecto" no está respaldado; lo que sí se sostiene es que ambos superan claramente a los modelos lineales. Es también la explicación del ajuste de hiperparámetros que daba resultados distintos en cada corrida.
+
+**Y un F1 global es un promedio, que esconde.** El mismo modelo, por segmento:
+
+| Segmento | Fraudes | Precisión | Recall | F1 |
+|---|---|---|---|---|
+| Dólares | 124 | 0,772 | 0,766 | **0,769** |
+| Importe bajo | 140 | 0,750 | 0,707 | 0,728 |
+| Madrugada | 43 | 0,737 | 0,651 | 0,691 |
+| No presencial | 205 | 0,689 | 0,615 | 0,649 |
+| Cliente con >200 trx | 118 | 0,683 | 0,602 | 0,640 |
+| Pesos | 115 | 0,486 | 0,304 | 0,374 |
+| Importe medio-alto | 20 | 0,308 | 0,200 | 0,242 |
+| Presencial | 34 | 0,333 | 0,118 | **0,174** |
+
+**"F1 0,60" esconde un rango de 0,17 a 0,77.** El modelo funciona donde el fraude es denso y distintivo —dólares, e-commerce, madrugada, importes bajos— y prácticamente no funciona en presencial, donde se le escapan 9 de cada 10 casos.
+
+Eso tiene dos consecuencias operativas. Primero, **dice dónde conviene apoyarse en el modelo y dónde hace falta otra capa** — reglas duras, o detección de anomalías. Y segundo, explica por qué el escenario de campaña presencial del banco de pruebas resultó tan destructivo: ataca exactamente el punto ciego. La segmentación y la simulación llegan a la misma conclusión por caminos independientes.
+
+Los segmentos con 17–34 fraudes son más ruidosos todavía que el total: leerlos como dirección, no como medición.
+
 ## Lo que falta para que esto sea producción de verdad
 
 Vale la pena ser explícito sobre el límite de este ejercicio:
@@ -253,6 +287,7 @@ produccion/
 │   ├── train.py        # entrenamiento, validación y serialización versionada
 │   ├── api.py          # servicio FastAPI de scoring
 │   ├── explain.py      # SHAP por transaccion y auditoria global
+│   ├── evaluacion.py   # intervalo de confianza del F1 y análisis por segmento
 │   ├── monitoring.py   # PSI, KS y performance con etiquetas reales
 │   ├── dashboard.py    # tablero HTML a partir del reporte de monitoreo
 │   └── retrain.py      # champion/challenger con partición temporal
