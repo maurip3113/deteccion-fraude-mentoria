@@ -2,6 +2,7 @@
 Muestra/
 tp2_train.csv
 tp2_test.csv
+dataset_curado_fraude.csv
 
 # Versiones de trabajo superadas por TP1_Analisis_Exploratorio_EDA.ipynb
 entrega_tp1_prediccion_eda.ipynb
